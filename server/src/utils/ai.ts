@@ -22,8 +22,7 @@ export const WORKER_AI_MODELS: Record<string, string> = {
     "gemma-2b": "@cf/google/gemma-2b-it-lora",
     "gemma-7b": "@cf/google/gemma-7b-it-lora",
     "deepseek-coder": "@cf/deepseek-ai/deepseek-coder-6.7b-base-awq",
-    "qwen-7b": "@cf/qwen/qwen1.5-7b-chat-awq",
-    "claude-opus-4.7": "@cf/anthropic/claude-opus-4.7"
+    "qwen-7b": "@cf/qwen/qwen1.5-7b-chat-awq"
 };
 
 export const AI_SUMMARY_SYSTEM_PROMPT =
