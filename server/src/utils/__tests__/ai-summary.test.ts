@@ -87,7 +87,7 @@ describe("generateAISummaryResult", () => {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
-    }) as typeof fetch;
+    }) as any;
 
     const { AI_SUMMARY_SYSTEM_PROMPT, generateAISummaryResult } = await import("../ai");
 

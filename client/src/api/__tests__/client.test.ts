@@ -5,7 +5,7 @@ const api = createClient('http://localhost')
 
 // Mock fetch globally
 const mockFetch = vi.fn()
-global.fetch = mockFetch
+global.fetch = mockFetch as any
 
 describe('API Client', () => {
   beforeEach(() => {

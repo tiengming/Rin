@@ -97,7 +97,7 @@ export function ConfigService(): Hono {
         const frontendUrl = new URL(c.req.url).origin;
         const testMessage = body.test_message?.trim() || "This is a test webhook message from Rin settings.";
 
-        if (!webhookUrl?.trim()) {
+        if (!webhookUrl || !webhookUrl.trim()) {
             return c.json({ success: false, error: "Webhook URL is required" }, 400);
         }
 
@@ -312,7 +312,7 @@ export function ConfigService(): Hono {
     // GET /config/:type
     app.get('/:type', async (c: AppContext) => {
         const admin = c.get('admin');
-        const type = c.req.param('type');
+        const type = c.req.param('type') || "";
         
         if (!isConfigType(type)) {
             return c.text('Invalid type', 400);
@@ -370,7 +370,7 @@ export function ConfigService(): Hono {
     // POST /config/:type
     app.post('/:type', async (c: AppContext) => {
         const admin = c.get('admin');
-        const type = c.req.param('type');
+        const type = c.req.param('type') || "";
         
         if (!isConfigType(type)) {
             return c.text('Invalid type', 400);

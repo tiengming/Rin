@@ -130,7 +130,8 @@ export function FriendService(): Hono {
             return c.text('Unauthorized', 401);
         }
         
-        const exist = await profileAsync(c, 'friend_update_lookup', () => db.query.friends.findFirst({ where: eq(friends.id, parseInt(id)) }));
+        const id_num = parseInt(id || "0");
+        const exist = await profileAsync(c, 'friend_update_lookup', () => db.query.friends.findFirst({ where: eq(friends.id, id_num) }));
         if (!exist) {
             return c.text('Not found', 404);
         }
@@ -158,7 +159,7 @@ export function FriendService(): Hono {
             url: wrap(url),
             accepted: finalAccepted === undefined ? undefined : finalAccepted,
             sort_order: finalSortOrder === undefined ? undefined : finalSortOrder,
-        }).where(eq(friends.id, parseInt(id))));
+        }).where(eq(friends.id, id_num)));
         
         if (!admin) {
             const {
@@ -203,7 +204,8 @@ export function FriendService(): Hono {
             return c.text('Unauthorized', 401);
         }
         
-        const exist = await profileAsync(c, 'friend_delete_lookup', () => db.query.friends.findFirst({ where: eq(friends.id, parseInt(id)) }));
+        const id_num = parseInt(id || "0");
+        const exist = await profileAsync(c, 'friend_delete_lookup', () => db.query.friends.findFirst({ where: eq(friends.id, id_num) }));
         if (!exist) {
             return c.text('Not found', 404);
         }
@@ -212,7 +214,7 @@ export function FriendService(): Hono {
             return c.text('Permission denied', 403);
         }
         
-        await profileAsync(c, 'friend_delete_db', () => db.delete(friends).where(eq(friends.id, parseInt(id))));
+        await profileAsync(c, 'friend_delete_db', () => db.delete(friends).where(eq(friends.id, id_num)));
         return c.text('OK');
     });
 
