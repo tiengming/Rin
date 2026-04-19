@@ -13,11 +13,11 @@ function FeedCardImage({ src, variant }: { src: string; variant: FeedCardVariant
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const { src: cleanSrc, blurhash, width, height } = parseImageUrlMetadata(src);
     const { failed, imageRef, loaded, onError, onLoad } = useImageLoadState(cleanSrc);
-    const aspectRatio = width && height ? `${width} / ${height}` : undefined;
+    const aspectRatio = width && height ? `${width} / ${height}` : "16 / 9";
     const imageFrameClass =
         variant === "editorial"
             ? "relative flex max-h-80 w-full flex-row items-center overflow-hidden rounded-[20px]"
-            : "relative mb-2 flex max-h-80 w-full flex-row items-center overflow-hidden rounded-xl";
+            : "relative mb-2 flex max-h-80 w-full flex-row items-center overflow-hidden rounded-xl min-h-[160px]";
 
     useEffect(() => {
         if (!blurhash || !canvasRef.current) {

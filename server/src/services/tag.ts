@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
+import { transformFeedItem } from "../utils/feed-transform";
 import type { DB } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
 import { feedHashtags, hashtags } from "../db/schema";
@@ -58,10 +59,7 @@ export function TagService(): Hono {
         
         const tagFeeds = tag?.feeds.map((tagFeed: any) => {
             if (!tagFeed.feed) return null;
-            return {
-                ...tagFeed.feed,
-                hashtags: tagFeed.feed.hashtags.map((hashtag: any) => hashtag.hashtag)
-            };
+            return transformFeedItem(tagFeed.feed, admin);
         }).filter((feed: any) => feed !== null);
         
         if (!tag) {
