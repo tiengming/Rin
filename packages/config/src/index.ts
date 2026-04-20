@@ -56,6 +56,7 @@ export const AI_CONFIG_KEYS = [
   `${AI_CONFIG_PREFIX}model`,
   `${AI_CONFIG_PREFIX}api_key`,
   `${AI_CONFIG_PREFIX}api_url`,
+  `${AI_CONFIG_PREFIX}image_model`,
 ] as const;
 
 export const SENSITIVE_SERVER_CONFIG_FIELDS = [`${AI_CONFIG_PREFIX}api_key`] as const;

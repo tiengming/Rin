@@ -29,6 +29,7 @@ export type AISettingsValue = {
   apiKey: string;
   apiKeySet: boolean;
   apiUrl: string;
+  imageModel?: string;
 };
 
 export function AISummarySettings({
@@ -53,6 +54,19 @@ export function AISummarySettings({
       apiUrl: preset?.url ?? "",
       model: models[0] ?? value.model,
     });
+  };
+
+  const handleFetchWorkersModels = async () => {
+    try {
+      const { data } = await client.config.aiModels();
+      if (data?.text) {
+        // Here we could update the local state to show more models
+        // But for now, we'll rely on the presets which we've already updated
+        showAlert(t("settings.ai_summary.models_loaded"));
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleTestModel = async () => {
@@ -142,21 +156,34 @@ export function AISummarySettings({
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-sm font-medium t-primary">{t("settings.ai_summary.model.title")}</p>
-                  <SearchableSelect
-                    value={value.model}
-                    onChange={(nextValue) => {
-                      onChange({ model: nextValue });
-                    }}
-                    options={modelOptions.map((option) => ({
-                      label: option,
-                      value: option,
-                    }))}
-                    placeholder={t("settings.ai_summary.model.desc")}
-                    searchPlaceholder={t("settings.ai_summary.model.desc")}
-                    emptyLabel={t("no_more")}
-                    allowCustomValue
-                    customValueLabel={(nextValue) => `${t("update.title")}: ${nextValue}`}
-                  />
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <SearchableSelect
+                        value={value.model}
+                        onChange={(nextValue) => {
+                          onChange({ model: nextValue });
+                        }}
+                        options={modelOptions.map((option) => ({
+                          label: option,
+                          value: option,
+                        }))}
+                        placeholder={t("settings.ai_summary.model.desc")}
+                        searchPlaceholder={t("settings.ai_summary.model.desc")}
+                        emptyLabel={t("no_more")}
+                        allowCustomValue
+                        customValueLabel={(nextValue) => `${t("update.title")}: ${nextValue}`}
+                      />
+                    </div>
+                    {value.provider === 'worker-ai' && (
+                      <button
+                        onClick={handleFetchWorkersModels}
+                        className="rounded-xl border border-black/10 bg-button px-3 text-xs t-primary hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/5"
+                        title={t("settings.ai_summary.fetch_models")}
+                      >
+                        🔄
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {providerFields.requiresApiKey ? (
                   <div className="space-y-2">
@@ -198,6 +225,23 @@ export function AISummarySettings({
                     />
                   </div>
                 ) : null}
+                {value.provider === 'worker-ai' && (
+                  <div className="space-y-2 lg:col-span-2 mt-4">
+                    <p className="text-sm font-medium t-primary">{t("AI 图片生成模型")}</p>
+                    <SearchableSelect
+                      value={value.imageModel || "stable-diffusion-xl"}
+                      onChange={(nextValue) => {
+                        onChange({ imageModel: nextValue });
+                      }}
+                      options={[
+                        { label: "Stable Diffusion XL", value: "stable-diffusion-xl" },
+                        { label: "DreamShaper 8", value: "dreamshaper-8" },
+                      ]}
+                      placeholder="选择图片生成模型"
+                      searchable={false}
+                    />
+                  </div>
+                )}
               </div>
             </SettingsCardBody>
           </SettingsCard>

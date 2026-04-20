@@ -22,11 +22,29 @@ export const WORKER_AI_MODELS: Record<string, string> = {
     "gemma-2b": "@cf/google/gemma-2b-it-lora",
     "gemma-7b": "@cf/google/gemma-7b-it-lora",
     "deepseek-coder": "@cf/deepseek-ai/deepseek-coder-6.7b-base-awq",
-    "qwen-7b": "@cf/qwen/qwen1.5-7b-chat-awq"
+    "qwen-7b": "@cf/qwen/qwen1.5-7b-chat-awq",
+    // Image Generation Models
+    "stable-diffusion-xl": "@cf/stabilityai/stable-diffusion-xl-base-1.0",
+    "dreamshaper-8": "@cf/lykon/dreamshaper-8-lcm",
+    // Audio / Speech Models
+    "whisper": "@cf/openai/whisper",
 };
 
+export const AI_TEXT_MODELS = [
+    "llama-3-8b", "llama-3-1-8b", "llama-2-7b", "mistral-7b", "mistral-7b-v2",
+    "gemma-2b", "gemma-7b", "deepseek-coder", "qwen-7b"
+];
+
+export const AI_IMAGE_MODELS = ["stable-diffusion-xl", "dreamshaper-8"];
+
 export const AI_SUMMARY_SYSTEM_PROMPT =
-    "你是一个中文内容摘要助手。请用简洁、准确、自然的中文总结用户提供的内容，不超过200字，不要添加原文没有的信息，不要输出标题或项目符号。";
+    "你是一个专业的中文内容摘要专家。请根据用户提供的文章内容，生成一段简洁、精准且吸引人的摘要。要求：\n1. 使用自然平实的中文，不要使用AI感明显的词汇（如'本文通过...','综上所述'等）。\n2. 摘要长度控制在150-300字之间，确保信息完整且不被切断。\n3. 直接输出摘要内容，不要包含标题、项目符号或任何前缀。";
+
+export const AI_TAGS_SYSTEM_PROMPT =
+    "你是一个文章标签提取助手。请根据用户提供的文章内容，提取3-5个最相关的中文标签。要求：\n1. 标签应简短有力，每个不超过6个字。\n2. 直接输出标签，以空格分隔，不要输出任何其他内容。";
+
+export const AI_REFORMAT_SYSTEM_PROMPT =
+    "你是一个专业的排版助手。请对用户提供的Markdown文章进行优化排版。要求：\n1. 修复错别字和不通顺的句子。\n2. 统一标点符号（使用全角中文标点）。\n3. 在中英文之间增加空格。\n4. 优化层级结构，确保逻辑清晰。\n5. 保持原文的Markdown格式，不要修改核心意思。";
 
 /**
  * Get full Worker AI model ID from short name
@@ -97,10 +115,45 @@ async function executeWorkerAI(
 
     // Worker AI uses messages format for chat models
     const response = await env.AI.run(modelId as any, {
-        messages
+        messages,
+        max_tokens: 1024, // Increase max tokens for summaries and reformatting
     } as any);
 
     return extractAIText(response);
+}
+
+/**
+ * Execute Worker AI Image Generation
+ */
+async function executeWorkerAIImage(
+    env: Env,
+    modelId: string,
+    prompt: string
+): Promise<ArrayBuffer> {
+    if (!env.AI || typeof env.AI.run !== "function") {
+        throw new Error("Workers AI binding is not configured");
+    }
+
+    const response = await env.AI.run(modelId as any, {
+        prompt
+    } as any);
+
+    if (response instanceof Uint8Array || response instanceof ArrayBuffer) {
+        return response as ArrayBuffer;
+    }
+
+    // Some versions might return a base64 string or an object with image data
+    const respObj = response as any;
+    if (respObj.image && typeof respObj.image === "string") {
+        const binaryString = atob(respObj.image);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes.buffer;
+    }
+
+    throw new Error("Invalid response from Image AI model");
 }
 
 /**
@@ -207,24 +260,26 @@ export async function generateAISummary(
     return result.summary;
 }
 
-export async function generateAISummaryResult(
+export async function executeAITask(
     env: Env,
     serverConfig: ConfigReader,
-    content: string
-): Promise<{ summary: string | null; skipped: boolean; error?: string }> {
+    content: string,
+    systemPrompt: string,
+    maxTokens = 1024
+): Promise<{ result: string | null; skipped: boolean; error?: string }> {
     const config = await getAIConfig(serverConfig);
 
     if (!config.enabled) {
-        return { summary: null, skipped: true };
+        return { result: null, skipped: true };
     }
 
     const { provider, model } = config;
-    const maxContentLength = 8000;
+    const maxContentLength = 10000;
     const truncatedContent = content.length > maxContentLength
         ? content.slice(0, maxContentLength) + "..."
         : content;
-    const summaryMessages = [
-        { role: "system" as const, content: AI_SUMMARY_SYSTEM_PROMPT },
+    const messages = [
+        { role: "system" as const, content: systemPrompt },
         { role: "user" as const, content: truncatedContent },
     ];
 
@@ -236,27 +291,65 @@ export async function generateAISummaryResult(
             result = await executeWorkerAI(
                 env, 
                 fullModelName, 
-                summaryMessages,
+                messages,
             );
         } else {
-            result = await executeExternalAI(config, summaryMessages);
+            result = await executeExternalAI({
+                ...config,
+                model: config.model, // Ensure we use the configured model
+            }, messages);
         }
 
         if (!result || !result.trim()) {
             return {
-                summary: null,
+                result: null,
                 skipped: false,
                 error: `Empty response from AI provider "${provider}" using model "${model}"`,
             };
         }
 
-        return { summary: result, skipped: false };
+        return { result: result, skipped: false };
     } catch (error) {
-        console.error("[AI Summary] Failed to generate summary:", error);
+        console.error(`[AI Task] Failed:`, error);
         return {
-            summary: null,
+            result: null,
             skipped: false,
             error: error instanceof Error ? error.message : String(error),
+        };
+    }
+}
+
+export async function generateAISummaryResult(
+    env: Env,
+    serverConfig: ConfigReader,
+    content: string
+): Promise<{ summary: string | null; skipped: boolean; error?: string }> {
+    const { result, skipped, error } = await executeAITask(env, serverConfig, content, AI_SUMMARY_SYSTEM_PROMPT, 512);
+    return { summary: result, skipped, error };
+}
+
+/**
+ * Generate an image from a prompt using Workers AI
+ */
+export async function generateAIImage(
+    env: Env,
+    serverConfig: ConfigReader,
+    prompt: string
+): Promise<{ image: ArrayBuffer | null; error?: string }> {
+    const config = await getAIConfig(serverConfig);
+    if (!config.enabled || config.provider !== 'worker-ai') {
+        return { image: null, error: "AI not enabled or only supported with Worker AI" };
+    }
+
+    try {
+        const model = (config as any).image_model || AI_IMAGE_MODELS[0]; // Use configured image model
+        const fullModelName = getWorkerAIModelId(model);
+        const image = await executeWorkerAIImage(env, fullModelName, prompt);
+        return { image };
+    } catch (error) {
+        return {
+            image: null,
+            error: error instanceof Error ? error.message : String(error)
         };
     }
 }

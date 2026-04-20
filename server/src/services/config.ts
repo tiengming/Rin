@@ -2,8 +2,17 @@ import { Hono } from "hono";
 import { wrapTime } from "hono/timing";
 import type { AppContext } from "../core/hono-types";
 import { setAIConfig, getAIConfig } from "../utils/db-config";
-import { testAIModel } from "../utils/ai";
+import {
+    testAIModel,
+    AI_TEXT_MODELS,
+    AI_IMAGE_MODELS,
+    executeAITask,
+    AI_TAGS_SYSTEM_PROMPT,
+    AI_REFORMAT_SYSTEM_PROMPT,
+    generateAIImage
+} from "../utils/ai";
 import { notify } from "../utils/webhook";
+import { putStorageObject } from "../utils/storage";
 import {
     buildCombinedConfigResponse,
     buildClientConfigResponse,
@@ -67,6 +76,79 @@ export function ConfigService(): Hono {
         // Use unified test function
         const result = await wrapTime(c, 'ai_test', testAIModel(env, testConfig, testPrompt));
         return c.json(result);
+    });
+
+    // GET /config/ai-models - List available AI models
+    app.get('/ai-models', async (c: AppContext) => {
+        return c.json({
+            text: AI_TEXT_MODELS,
+            image: AI_IMAGE_MODELS,
+        });
+    });
+
+    // POST /config/ai-tags - Generate tags for content
+    app.post('/ai-tags', async (c: AppContext) => {
+        const admin = c.get('admin');
+        if (!admin) return c.text('Unauthorized', 401);
+
+        const { content } = await c.req.json();
+        const env = c.get('env');
+        const serverConfig = c.get('serverConfig');
+
+        const { result, error } = await executeAITask(env, serverConfig, content, AI_TAGS_SYSTEM_PROMPT, 128);
+        if (error) return c.json({ error }, 400);
+
+        const tags = (result || "").split(/\s+/).filter(t => t.length > 0);
+        return c.json({ tags });
+    });
+
+    // POST /config/ai-reformat - Reformat markdown content
+    app.post('/ai-reformat', async (c: AppContext) => {
+        const admin = c.get('admin');
+        if (!admin) return c.text('Unauthorized', 401);
+
+        const { content } = await c.req.json();
+        const env = c.get('env');
+        const serverConfig = c.get('serverConfig');
+
+        const { result, error } = await executeAITask(env, serverConfig, content, AI_REFORMAT_SYSTEM_PROMPT, 2048);
+        if (error) return c.json({ error }, 400);
+
+        return c.json({ content: result });
+    });
+
+    // POST /config/ai-image - Generate featured image
+    app.post('/ai-image', async (c: AppContext) => {
+        const admin = c.get('admin');
+        if (!admin) return c.text('Unauthorized', 401);
+
+        const { prompt } = await c.req.json();
+        const env = c.get('env');
+        const serverConfig = c.get('serverConfig');
+
+        const { image, error } = await generateAIImage(env, serverConfig, prompt);
+        if (error || !image) return c.json({ error: error || "Failed to generate image" }, 400);
+
+        // Upload generated image to storage
+        const fileName = `ai-gen-${Date.now()}.png`;
+        const uploadResult = await putStorageObject(env, fileName, image, "image/png", new URL(c.req.url).origin);
+
+        return c.json({ url: uploadResult.url });
+    });
+
+    // POST /config/ai-summary - Manual generate summary
+    app.post('/ai-summary', async (c: AppContext) => {
+        const admin = c.get('admin');
+        if (!admin) return c.text('Unauthorized', 401);
+
+        const { content } = await c.req.json();
+        const env = c.get('env');
+        const serverConfig = c.get('serverConfig');
+
+        const { summary, error } = await generateAISummaryResult(env, serverConfig, content);
+        if (error) return c.json({ error }, 400);
+
+        return c.json({ summary });
     });
 
     app.post('/test-webhook', async (c: AppContext) => {

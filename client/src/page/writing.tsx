@@ -130,7 +130,44 @@ export function WritingPage({ id }: { id?: number }) {
   const [content, setContent] = cache.useCache("content", "");
   const [createdAt, setCreatedAt] = useState<Date | undefined>(new Date());
   const [publishing, setPublishing] = useState(false)
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
   const { showAlert, AlertUI } = useAlert()
+
+  const handleAiAction = async (action: 'summary' | 'tags' | 'reformat' | 'image') => {
+    if (!content && action !== 'image') {
+      showAlert(t("content.empty"));
+      return;
+    }
+
+    setAiLoading(action);
+    try {
+      if (action === 'summary') {
+        const { data, error } = await (client as any).config.aiSummary({ content });
+        if (data?.summary) setSummary(data.summary);
+        else if (error) showAlert(error.value);
+      } else if (action === 'tags') {
+        const { data, error } = await (client as any).config.aiTags({ content });
+        if (data?.tags) setTags(data.tags.map((t: string) => `#${t}`).join(' '));
+        else if (error) showAlert(error.value);
+      } else if (action === 'reformat') {
+        const { data, error } = await (client as any).config.aiReformat({ content });
+        if (data?.content) setContent(data.content);
+        else if (error) showAlert(error.value);
+      } else if (action === 'image') {
+        const prompt = title || "A beautiful cover image for a blog post";
+        const { data, error } = await (client as any).config.aiImage({ prompt });
+        if (data?.url) {
+          const imgMarkdown = `\n![AI Cover](${data.url})\n`;
+          setContent(imgMarkdown + content);
+        } else if (error) showAlert(error.value);
+      }
+    } catch (err) {
+      showAlert(String(err));
+    } finally {
+      setAiLoading(null);
+    }
+  };
+
   function publishButton() {
     if (publishing) return;
     const tagsplit =
@@ -242,6 +279,40 @@ export function WritingPage({ id }: { id?: number }) {
   function MetaInput({ className }: { className?: string }) {
     return (
         <FlatPanel className={className}>
+          <div className="mb-6 flex flex-wrap gap-2 rounded-xl bg-secondary p-2 border border-black/5 dark:border-white/5">
+            <button
+              onClick={() => handleAiAction('summary')}
+              disabled={!!aiLoading}
+              title="根据正文自动生成文章摘要"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium t-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-50"
+            >
+              {aiLoading === 'summary' ? <Loading type="spin" height={12} width={12} /> : '✨'} {t('AI 摘要')}
+            </button>
+            <button
+              onClick={() => handleAiAction('tags')}
+              disabled={!!aiLoading}
+              title="根据正文自动提取文章标签"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium t-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-50"
+            >
+              {aiLoading === 'tags' ? <Loading type="spin" height={12} width={12} /> : '🏷️'} {t('AI 标签')}
+            </button>
+            <button
+              onClick={() => handleAiAction('image')}
+              disabled={!!aiLoading}
+              title="根据标题生成一张精美的文章配图"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium t-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-50"
+            >
+              {aiLoading === 'image' ? <Loading type="spin" height={12} width={12} /> : '🎨'} {t('AI 配图')}
+            </button>
+            <button
+              onClick={() => handleAiAction('reformat')}
+              disabled={!!aiLoading}
+              title="AI 自动优化文章排版、纠正错别字"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium t-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-50"
+            >
+              {aiLoading === 'reformat' ? <Loading type="spin" height={12} width={12} /> : '🪄'} {t('AI 排版')}
+            </button>
+          </div>
           <div className="flex flex-row gap-4 border-b border-black/5 pb-5 dark:border-white/5 items-start justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-theme/70">{t('writing')}</p>

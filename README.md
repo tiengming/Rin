@@ -129,7 +129,17 @@ The repository includes several automated workflows:
 - `GOOGLE_VERIFICATION`, `MICROSOFT_VERIFICATION` - Site verification codes for search engines (e.g., Google Search Console, Bing Webmaster Tools)
 - `GOOGLE_ANALYTICS_ID`, `MICROSOFT_CLARITY_ID` - Analytics tracking IDs (e.g., GA4 G-XXXXX, Clarity project ID)
 
-> **Note on SEO**: Rin automatically generates SEO-friendly metadata (Open Graph, Twitter Cards) based on your site name, description, and avatar provided in the configuration.
+### AI Features (powered by Cloudflare Workers AI)
+
+Rin leverages Workers AI to provide a suite of intelligent features for content creators. Ensure you have the `AI` binding configured in your Cloudflare Worker.
+
+- **AI Summary**: Automatically generate a 150-300 word summary of your article. Optimized prompts ensure the summary is natural and complete.
+- **AI Tags**: Extract relevant hashtags from your content automatically.
+- **AI Featured Image**: Generate a unique cover image for your article using Stable Diffusion or DreamShaper models based on your title.
+- **AI Reformatting**: One-click optimization of Markdown formatting, spelling correction, and typography (especially for mixed Chinese/English content).
+- **Model Selection**: Choose between various free Workers AI models (Llama, Mistral, Gemma, etc.) in the dashboard settings.
+
+> **Note on SEO**: Rin automatically generates SEO-friendly metadata (Open Graph, Twitter Cards) based on your site name, description, and avatar. It also includes the AI-generated summary in meta tags to improve search engine visibility.
 
 Full documentation is available at https://docs.openrin.org.
 
