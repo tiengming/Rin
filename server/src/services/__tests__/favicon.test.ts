@@ -178,6 +178,10 @@ describe('FaviconService', () => {
                     });
                 }
 
+                if (url.endsWith('/images/originFavicon.svg')) {
+                    return new Response('missing', { status: 404 });
+                }
+
                 if (url === 'https://test-bucket.test.r2.cloudflarestorage.com/images/favicon.webp' && method === 'PUT') {
                     return new Response(null, { status: 200 });
                 }
@@ -258,6 +262,58 @@ describe('FaviconService', () => {
             expect(res.status).toBe(200);
             expect(res.headers.get('content-type')).toBe('image/webp');
             expect(await res.text()).toBe('test');
+        });
+
+        it('should return SVG favicon when available', async () => {
+            const svgEnv = createMockEnv({
+                R2_BUCKET: {
+                    get: async (key: string) => {
+                        if (key !== 'images/originFavicon.svg') {
+                            return null;
+                        }
+
+                        return {
+                            key,
+                            size: 4,
+                            etag: 'etag',
+                            httpEtag: 'etag',
+                            uploaded: new Date('2025-01-01T00:00:00Z'),
+                            storageClass: 'Standard',
+                            checksums: {} as R2Checksums,
+                            httpMetadata: { contentType: 'image/svg+xml' },
+                            writeHttpMetadata(headers: Headers) {
+                                headers.set('Content-Type', 'image/svg+xml');
+                            },
+                            body: new Blob(['<svg></svg>']).stream(),
+                            bodyUsed: false,
+                            arrayBuffer: async () => new TextEncoder().encode('<svg></svg>').buffer,
+                        } as unknown as R2ObjectBody;
+                    },
+                } as R2Bucket,
+            });
+
+            const svgApp = new Hono<{ Bindings: Env; Variables: Variables }>();
+            svgApp.use(createMiddleware<{ Bindings: Env; Variables: Variables }>(async (c, next) => {
+                c.set('db', db);
+                c.set('cache', new TestCacheImpl());
+                c.set('serverConfig', new TestCacheImpl());
+                c.set('clientConfig', new TestCacheImpl());
+                c.set('jwt', {
+                    sign: async (payload: any) => `mock_token_${payload.id}`,
+                    verify: async (token: string) => token.startsWith('mock_token_') ? { id: 1 } : null,
+                } as JWTUtils);
+                c.set('env', svgEnv);
+                c.set('uid', 1);
+                c.set('admin', true);
+                await next();
+            }));
+            svgApp.route('/', FaviconService());
+
+            const res = await svgApp.request('/', { method: 'GET' }, svgEnv);
+
+            expect(res.status).toBe(200);
+            expect(res.headers.get('content-type')).toBe('image/svg+xml');
+            expect(await res.text()).toBe('<svg></svg>');
         });
     });
 
