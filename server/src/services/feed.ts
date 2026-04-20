@@ -4,8 +4,8 @@ import type { Variables } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
 import { feeds, visits, visitStats } from "../db/schema";
 import { HyperLogLog } from "../utils/hyperloglog";
-import { extractImageWithMetadata } from "../utils/image";
 import { syncFeedAISummaryQueueState } from "./feed-ai-summary";
+import { transformFeedItem } from "../utils/feed-transform";
 import { bindTagToPost } from "./tag";
 import { clearFeedCache } from "./clear-feed-cache";
 export { clearFeedCache } from "./clear-feed-cache";
@@ -83,15 +83,7 @@ export function FeedService(): Hono<{
             orderBy: [desc(feeds.top), desc(feeds.createdAt), desc(feeds.updatedAt)],
             offset: page_num * limit_num,
             limit: limit_num + 1,
-        }))).map(({ content, hashtags, summary, ...other }: any) => {
-            const avatar = extractImageWithMetadata(content);
-            return {
-                summary: summary.length > 0 ? summary : content.length > 100 ? content.slice(0, 100) : content,
-                hashtags: hashtags.map(({ hashtag }: any) => hashtag),
-                avatar,
-                ...other
-            };
-        });
+        }))).map((item: any) => transformFeedItem(item, admin));
 
         let hasNext = false;
         if (feed_list.length === limit_num + 1) {
@@ -274,6 +266,7 @@ export function FeedService(): Hono<{
     app.get("/adjacent/:id", async (c) => {
         const db = c.get('db');
         const cache = c.get('cache');
+        const admin = c.get('admin');
         const id = c.req.param('id');
         let id_num: number;
 
@@ -300,20 +293,16 @@ export function FeedService(): Hono<{
 
         function formatAndCacheData(feed: any, feedDirection: "previous_feed" | "next_feed") {
             if (feed) {
-                const hashtags_flatten = feed.hashtags.map((f: any) => f.hashtag);
-                const summary = feed.summary.length > 0
-                    ? feed.summary
-                    : feed.content.length > 50
-                        ? feed.content.slice(0, 50)
-                        : feed.content;
+                const transformed = transformFeedItem(feed, admin);
                 const cacheKey = `${feed.id}_${feedDirection}_${id_num}`;
                 const cacheData = {
-                    id: feed.id,
-                    title: feed.title,
-                    summary: summary,
-                    hashtags: hashtags_flatten,
-                    createdAt: feed.createdAt,
-                    updatedAt: feed.updatedAt,
+                    id: transformed.id,
+                    title: transformed.title,
+                    summary: transformed.summary,
+                    hashtags: transformed.hashtags,
+                    avatar: transformed.avatar,
+                    createdAt: transformed.createdAt,
+                    updatedAt: transformed.updatedAt,
                 };
                 cache.set(cacheKey, cacheData);
                 return cacheData;
@@ -522,13 +511,7 @@ export function SearchService(): Hono<{
                 user: { columns: { id: true, username: true, avatar: true } }
             },
             orderBy: [desc(feeds.createdAt), desc(feeds.updatedAt)],
-        })))).map(({ content, hashtags, summary, ...other }: any) => {
-            return {
-                summary: summary.length > 0 ? summary : content.length > 100 ? content.slice(0, 100) : content,
-                hashtags: hashtags.map(({ hashtag }: any) => hashtag),
-                ...other
-            };
-        });
+        })))).map((item: any) => transformFeedItem(item, admin));
 
         if (feed_list.length <= page_num * limit_num) {
             return c.json({ size: feed_list.length, data: [], hasNext: false });

@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
+import { transformFeedItem } from "../utils/feed-transform";
 import type { DB } from "../core/hono-types";
 import { profileAsync } from "../core/server-timing";
 import { feedHashtags, hashtags } from "../db/schema";
@@ -30,7 +31,7 @@ export function TagService(): Hono {
     app.get('/:name', async (c: AppContext) => {
         const db = c.get('db');
         const admin = c.get('admin');
-        const nameDecoded = decodeURI(c.req.param('name'));
+        const nameDecoded = decodeURI(c.req.param('name') || "");
         
         const tag = await profileAsync(c, 'tag_detail_db', () => db.query.hashtags.findFirst({
             where: eq(hashtags.name, nameDecoded),
@@ -58,10 +59,7 @@ export function TagService(): Hono {
         
         const tagFeeds = tag?.feeds.map((tagFeed: any) => {
             if (!tagFeed.feed) return null;
-            return {
-                ...tagFeed.feed,
-                hashtags: tagFeed.feed.hashtags.map((hashtag: any) => hashtag.hashtag)
-            };
+            return transformFeedItem(tagFeed.feed, admin);
         }).filter((feed: any) => feed !== null);
         
         if (!tag) {

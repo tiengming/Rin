@@ -703,7 +703,7 @@ describe("ConfigService", () => {
             globalThis.fetch = mock(async (url: string | URL | Request, init?: RequestInit) => {
                 requests.push({ url: String(url), init });
                 return new Response("ok", { status: 200 });
-            }) as typeof fetch;
+            }) as any;
 
             const res = await app.request("/test-webhook", {
                 method: "POST",
@@ -758,7 +758,7 @@ describe("ConfigService", () => {
             globalThis.fetch = mock(async (url: string | URL | Request, init?: RequestInit) => {
                 requests.push({ url: String(url), init });
                 return new Response("ok", { status: 200 });
-            }) as typeof fetch;
+            }) as any;
 
             const res = await app.request("/test-webhook", {
                 method: "POST",

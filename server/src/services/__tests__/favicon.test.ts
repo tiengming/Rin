@@ -163,7 +163,7 @@ describe('FaviconService', () => {
             app.route('/', FaviconService());
 
             const originalFetch = globalThis.fetch;
-            globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+            globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
                 const url = typeof input === 'string'
                     ? input
                     : input instanceof URL
@@ -186,8 +186,8 @@ describe('FaviconService', () => {
                     return new Response('missing', { status: 404 });
                 }
 
-                return originalFetch(input, init);
-            };
+                return (originalFetch as any)(input, init);
+            }) as any;
 
             try {
                 const res = await app.request('/', { method: 'GET' }, env);
