@@ -26,7 +26,11 @@ export const AI_PROVIDER_PRESETS = [
 ] as const;
 
 export const AI_MODEL_PRESETS: Record<string, string[]> = {
-  "worker-ai": ["llama-3-8b", "llama-3-1-8b", "llama-2-7b", "mistral-7b", "mistral-7b-v2", "gemma-2b", "gemma-7b", "deepseek-coder", "qwen-7b"],
+  "worker-ai": [
+    "llama-3-8b", "llama-3-1-8b", "llama-2-7b", "mistral-7b", "mistral-7b-v2",
+    "gemma-2b", "gemma-7b", "deepseek-coder", "qwen-7b",
+    "stable-diffusion-xl", "dreamshaper-8", "whisper"
+  ],
   openai: ["gpt-5.2", "gpt-5.1", "gpt-5", "gpt-5-mini", "gpt-5-nano", "gpt-5-pro", "gpt-5.1-codex", "gpt-5.1-codex-max", "gpt-5.1-codex-mini", "gpt-5-codex", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo", "o3", "o3-mini", "o1", "o1-mini", "o1-preview"],
   claude: ["claude-opus-4-5-20251101", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001", "claude-opus-4-5", "claude-sonnet-4-5", "claude-haiku-4-5", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
   gemini: ["gemini-3-pro-preview", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-flash-preview-09-2025", "gemini-2.5-flash-lite", "gemini-2.5-flash-lite-preview-09-2025", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-001", "gemini-2.0-flash-exp", "gemini-2.0-flash-lite", "gemini-2.0-flash-lite-001", "gemini-1.5-pro", "gemini-1.5-flash"],
@@ -117,6 +121,7 @@ export function buildAIConfigUpdates(updates: Record<string, unknown>) {
   if (updates.model !== undefined) flatUpdates["ai_summary.model"] = updates.model;
   if (updates.api_url !== undefined) flatUpdates["ai_summary.api_url"] = updates.api_url;
   if (updates.api_key !== undefined) flatUpdates["ai_summary.api_key"] = updates.api_key;
+  if (updates.imageModel !== undefined) flatUpdates["ai_summary.image_model"] = updates.imageModel;
   return flatUpdates;
 }
 
@@ -196,6 +201,7 @@ export function buildAIConfigDraftValue(
     apiKey: String(serverConfig["ai_summary.api_key"] ?? ""),
     apiKeySet: hasStoredAiApiKey || String(serverConfig["ai_summary.api_key"] ?? "").trim().length > 0,
     apiUrl: String(serverConfig["ai_summary.api_url"] ?? ""),
+    imageModel: String(serverConfig["ai_summary.image_model"] ?? "stable-diffusion-xl"),
   };
 }
 

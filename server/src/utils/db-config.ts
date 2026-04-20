@@ -10,10 +10,10 @@ type ConfigWriter = ConfigReader & {
     save(): Promise<void>;
 };
 
-const AI_CONFIG_FIELDS = ["enabled", "provider", "model", "api_key", "api_url"] as const;
+const AI_CONFIG_FIELDS = ["enabled", "provider", "model", "api_key", "api_url", "image_model"] as const;
 
-export function readAIConfigFromValues(values: Record<string, unknown>): AIConfig {
-    const config: AIConfig = { ...DEFAULT_AI_CONFIG };
+export function readAIConfigFromValues(values: Record<string, unknown>): AIConfig & { image_model?: string } {
+    const config: AIConfig & { image_model?: string } = { ...DEFAULT_AI_CONFIG };
 
     const enabled = values[AI_CONFIG_PREFIX + "enabled"];
     if (enabled != null) {
@@ -38,6 +38,11 @@ export function readAIConfigFromValues(values: Record<string, unknown>): AIConfi
     const apiUrl = values[AI_CONFIG_PREFIX + "api_url"];
     if (typeof apiUrl === "string") {
         config.api_url = apiUrl;
+    }
+
+    const imageModel = values[AI_CONFIG_PREFIX + "image_model"];
+    if (typeof imageModel === "string") {
+        config.image_model = imageModel;
     }
 
     return config;

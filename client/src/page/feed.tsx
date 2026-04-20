@@ -143,9 +143,9 @@ export function FeedPage({ id, TOC, clean }: { id: string, TOC: () => JSX.Elemen
           <meta
             name="og:description"
             content={
-              feed.content.length > 200
+              feed.ai_summary || (feed.content.length > 200
                 ? feed.content.substring(0, 200)
-                : feed.content
+                : feed.content)
             }
           />
           <meta name="author" content={feed.user.username} />
@@ -156,9 +156,9 @@ export function FeedPage({ id, TOC, clean }: { id: string, TOC: () => JSX.Elemen
           <meta
             name="description"
             content={
-              feed.content.length > 200
+              feed.ai_summary || (feed.content.length > 200
                 ? feed.content.substring(0, 200)
-                : feed.content
+                : feed.content)
             }
           />
         </Helmet>

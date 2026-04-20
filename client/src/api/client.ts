@@ -536,6 +536,26 @@ class ConfigAPI {
   }): Promise<ApiResponse<{ success: boolean; error?: string; details?: string }>> {
     return this.http.post("/api/config/test-webhook", body);
   }
+
+  async aiModels(): Promise<ApiResponse<{ text: string[]; image: string[] }>> {
+    return this.http.get("/api/config/ai-models");
+  }
+
+  async aiTags(body: { content: string }): Promise<ApiResponse<{ tags: string[] }>> {
+    return this.http.post("/api/config/ai-tags", body);
+  }
+
+  async aiReformat(body: { content: string }): Promise<ApiResponse<{ content: string }>> {
+    return this.http.post("/api/config/ai-reformat", body);
+  }
+
+  async aiImage(body: { prompt: string }): Promise<ApiResponse<{ url: string }>> {
+    return this.http.post("/api/config/ai-image", body);
+  }
+
+  async aiSummary(body: { content: string }): Promise<ApiResponse<{ summary: string }>> {
+    return this.http.post("/api/config/ai-summary", body);
+  }
 }
 
 /**

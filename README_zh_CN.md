@@ -129,7 +129,17 @@ bun run deploy:client
 - `GOOGLE_VERIFICATION`, `MICROSOFT_VERIFICATION` - 用于搜索引擎的站点验证代号（如 Google Search Console、Bing Webmaster Tools）
 - `GOOGLE_ANALYTICS_ID`, `MICROSOFT_CLARITY_ID` - 站点统计分析 ID（如 GA4 的 G-XXXXX、Clarity 项目 ID）
 
-> **关于 SEO**: Rin 会根据配置中的站点名称、描述和头像自动生成 SEO 友好的元数据（Open Graph、Twitter Cards），有助于搜索引擎收录和社交媒体传播。
+### AI 增强功能 (由 Cloudflare Workers AI 驱动)
+
+Rin 充分利用了 Cloudflare Workers AI 的免费模型，为创作者提供了一系列智能工具。请确保您的 Cloudflare Worker 已配置 `AI` 绑定。
+
+- **AI 摘要**: 自动生成 150-300 字的文章摘要。经过优化的 Prompt 确保摘要自然、完整且不被截断。
+- **AI 标签**: 自动根据文章内容提取相关的关键词标签。
+- **AI 配图**: 利用 Stable Diffusion 或 DreamShaper 模型，根据文章标题生成独一无二的封面图。
+- **AI 排版**: 一键优化 Markdown 排版、纠正错别字、统一标点符号，特别优化了中英文混排体验。
+- **模型切换**: 可以在后台设置中自由切换多种 Workers AI 免费模型（如 Llama, Mistral, Gemma 等）。
+
+> **关于 SEO**: Rin 会根据配置自动生成 SEO 友好的元数据（Open Graph、Twitter Cards），并自动将 AI 生成的摘要填入 meta 标签，有助于搜索引擎收录和提升网站传播度。
 
 完整文档请访问 https://docs.openrin.org。
 
