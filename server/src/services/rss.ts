@@ -35,6 +35,15 @@ async function initRSSModules() {
         remarkRehype = remarkRehypeMod.default;
         rehypeStringify = rehypeStringifyMod.default;
     }
+
+    if (unified && remarkParse && remarkGfm && remarkRehype && rehypeStringify) {
+        return unified()
+            .use(remarkParse)
+            .use(remarkGfm)
+            .use(remarkRehype)
+            .use(rehypeStringify);
+    }
+    return null;
 }
 
 export function RSSService(): Hono {
@@ -195,6 +204,8 @@ async function generateFeed(env: Env, db: DB, frontendUrl: string, c?: AppContex
 
     const feed = new Feed(feedConfig);
 
+    const markdownProcessor = await initRSSModules();
+
     // Get published feeds
     const feed_list = c
         ? await profileAsync(c, 'rss_feed_list', () => db.query.feeds.findMany({
@@ -219,19 +230,16 @@ async function generateFeed(env: Env, db: DB, frontendUrl: string, c?: AppContex
         
         // Convert markdown to HTML
         let contentHtml = '';
-        if (content) {
+        if (content && markdownProcessor) {
             try {
-                const file = await unified()
-                    .use(remarkParse)
-                    .use(remarkGfm)
-                    .use(remarkRehype)
-                    .use(rehypeStringify)
-                    .process(content);
+                const file = await markdownProcessor.process(content);
                 contentHtml = file.toString();
             } catch (e) {
                 console.error('[RSS] Markdown conversion error:', e);
                 contentHtml = content;
             }
+        } else {
+            contentHtml = content;
         }
 
         feed.addItem({

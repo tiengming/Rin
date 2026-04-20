@@ -261,6 +261,7 @@ export interface AIConfig {
   model: string;
   api_key: string;
   api_url: string;
+  image_model?: string;
 }
 
 // ============================================================================

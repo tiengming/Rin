@@ -395,6 +395,22 @@ export async function setupTestApp(
     // Mount service
     app.route('/', serviceFactory());
 
+    // Mock global fetch to prevent network hangs in tests
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string'
+            ? input
+            : input instanceof URL
+                ? input.toString()
+                : input.url;
+
+        if (url.includes('cloudflarestorage.com') || url.includes('test-image-domain.com')) {
+            return new Response(null, { status: 404 });
+        }
+
+        return (originalFetch as any)(input, init);
+    }) as any;
+
     return { db, sqlite, env, app, cache, serverConfig, clientConfig };
 }
 
