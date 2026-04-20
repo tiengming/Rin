@@ -144,9 +144,17 @@ export async function headStorageObject(env: Env, storageKey: string): Promise<R
   return response;
 }
 
+function normalizePublicBaseUrl(url: string) {
+  const trimmed = trimTrailingSlash(url);
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
 export function getStoragePublicUrl(env: Env, storageKey: string, baseUrl?: string) {
   if (env.S3_ACCESS_HOST) {
-    return `${trimTrailingSlash(env.S3_ACCESS_HOST)}/${storageKey}`;
+    return `${normalizePublicBaseUrl(env.S3_ACCESS_HOST)}/${storageKey}`;
   }
 
   return buildBlobUrl(storageKey, baseUrl);

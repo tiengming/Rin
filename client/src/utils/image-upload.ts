@@ -54,6 +54,23 @@ export function attachImageMetadataToUrl(url: string, metadata: ImageMetadata = 
   return `${baseUrl}#${params.toString()}`;
 }
 
+function normalizeImageUrl(url: string) {
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("/") ||
+    url.startsWith("data:") ||
+    url.startsWith("blob:")
+  ) {
+    return url;
+  }
+  // If it contains a dot and doesn't start with a protocol, assume it's a domain-relative path missing https
+  if (url.includes(".")) {
+    return `https://${url}`;
+  }
+  return url;
+}
+
 export function parseImageUrlMetadata(url?: string | null) {
   if (!url) {
     return {
@@ -62,7 +79,8 @@ export function parseImageUrlMetadata(url?: string | null) {
     };
   }
 
-  const [src, fragment = ""] = url.split("#", 2);
+  const [rawSrc, fragment = ""] = url.split("#", 2);
+  const src = normalizeImageUrl(rawSrc);
   const params = new URLSearchParams(fragment);
 
   return {
