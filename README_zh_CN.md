@@ -126,6 +126,8 @@ bun run deploy:client
 - `WORKER_NAME`, `PAGES_NAME`, `DB_NAME` - 资源名称
 - `NAME`, `DESCRIPTION`, `AVATAR` - 站点配置
 - `R2_BUCKET_NAME` - 要使用的特定 R2 存储桶
+- `GOOGLE_VERIFICATION`, `MICROSOFT_VERIFICATION` - 用于搜索引擎的站点验证代号
+- `GOOGLE_ANALYTICS_ID`, `MICROSOFT_CLARITY_ID` - 站点统计分析 ID
 
 完整文档请访问 https://docs.openrin.org。
 

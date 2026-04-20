@@ -126,6 +126,8 @@ The repository includes several automated workflows:
 - `WORKER_NAME`, `PAGES_NAME`, `DB_NAME` - Resource names
 - `NAME`, `DESCRIPTION`, `AVATAR` - Site configuration
 - `R2_BUCKET_NAME` - Specific R2 bucket to use
+- `GOOGLE_VERIFICATION`, `MICROSOFT_VERIFICATION` - Site verification codes for search engines
+- `GOOGLE_ANALYTICS_ID`, `MICROSOFT_CLARITY_ID` - Analytics tracking IDs
 
 Full documentation is available at https://docs.openrin.org.
 
