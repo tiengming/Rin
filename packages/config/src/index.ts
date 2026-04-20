@@ -18,6 +18,10 @@ export const CLIENT_CONFIG_DEFAULTS = new Map(
     "site.description": "A lightweight personal blogging system",
     "site.avatar": "",
     "site.page_size": 5,
+    "site.google_verification": "",
+    "site.microsoft_verification": "",
+    "site.google_analytics_id": "",
+    "site.microsoft_clarity_id": "",
   }),
 );
 
@@ -38,6 +42,10 @@ export const CLIENT_CONFIG_ENV_DEFAULTS: Record<string, string> = {
   "site.description": "DESCRIPTION",
   "site.avatar": "AVATAR",
   "site.page_size": "PAGE_SIZE",
+  "site.google_verification": "GOOGLE_VERIFICATION",
+  "site.microsoft_verification": "MICROSOFT_VERIFICATION",
+  "site.google_analytics_id": "GOOGLE_ANALYTICS_ID",
+  "site.microsoft_clarity_id": "MICROSOFT_CLARITY_ID",
 };
 
 export const AI_CONFIG_PREFIX = "ai_summary.";

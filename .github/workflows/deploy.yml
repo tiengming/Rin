@@ -217,6 +217,10 @@ jobs:
           RSS_TITLE: ${{ vars.RSS_TITLE || '' }}
           RSS_DESCRIPTION: ${{ vars.RSS_DESCRIPTION || '' }}
           CACHE_STORAGE_MODE: ${{ vars.CACHE_STORAGE_MODE || 's3' }}
+          GOOGLE_VERIFICATION: ${{ vars.GOOGLE_VERIFICATION || '' }}
+          MICROSOFT_VERIFICATION: ${{ vars.MICROSOFT_VERIFICATION || '' }}
+          GOOGLE_ANALYTICS_ID: ${{ vars.GOOGLE_ANALYTICS_ID || '' }}
+          MICROSOFT_CLARITY_ID: ${{ vars.MICROSOFT_CLARITY_ID || '' }}
         run: |
           set -euo pipefail
           if [[ "${{ needs.prepare.outputs.is_production }}" == "true" ]]; then
