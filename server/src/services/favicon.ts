@@ -17,6 +17,10 @@ export function getFaviconKey(env: Env) {
     return path_join(env.S3_FOLDER || "", "favicon.webp");
 }
 
+export function getFaviconSvgKey(env: Env) {
+    return path_join(env.S3_FOLDER || "", "originFavicon.svg");
+}
+
 async function buildFaviconFromSource(c: AppContext, sourceUrl: string, faviconKey: string) {
     const env = c.get('env');
     const imageRequest = new Request(sourceUrl, {
@@ -64,11 +68,22 @@ export function FaviconService(): Hono {
         const env = c.get('env');
         const clientConfig = c.get('clientConfig');
         const faviconKey = getFaviconKey(env);
-        
+        const faviconSvgKey = getFaviconSvgKey(env);
+
         try {
+            // 1. Try to serve SVG first if it exists
+            const svgResponse = await profileAsync(c, 'favicon_svg_fetch', () => getStorageObject(env, faviconSvgKey));
+            if (svgResponse) {
+                c.header("Content-Type", "image/svg+xml");
+                c.header("Cache-Control", "public, max-age=31536000");
+                return c.body(await profileAsync(c, 'favicon_svg_body', () => svgResponse.arrayBuffer()));
+            }
+
+            // 2. Try to serve generated WebP
             const response = await profileAsync(c, 'favicon_fetch', () => getStorageObject(env, faviconKey));
 
             if (!response) {
+                // 3. Fallback to generating from site avatar
                 const avatar = await profileAsync(c, 'favicon_avatar', () => clientConfig.get("site.avatar")) as string | undefined;
                 if (!avatar) {
                     c.status(404);
