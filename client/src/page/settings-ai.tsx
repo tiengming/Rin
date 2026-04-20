@@ -42,7 +42,7 @@ export function AISummarySettings({
   const { t } = useTranslation();
   const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "error">("idle");
   const [testResult, setTestResult] = useState<{ success?: boolean; response?: string; error?: string; details?: string } | null>(null);
-  const { AlertUI } = useAlert();
+  const { showAlert, AlertUI } = useAlert();
   const providerFields = getAIProviderFields(value.provider);
 
   const handleProviderChange = (nextProvider: string) => {
