@@ -19,17 +19,37 @@ export function AppProviders({
   const googleAnalyticsId = config.get<string>("site.google_analytics_id");
   const microsoftClarityId = config.get<string>("site.microsoft_clarity_id");
 
+  const siteName = config.get<string>("site.name") || "Rin";
+  const siteDescription = config.get<string>("site.description") || "";
+  const siteAvatar = config.get<string>("site.avatar");
+
   return (
     <ClientConfigContext.Provider value={config}>
       <ProfileContext.Provider value={profile}>
         <Helmet>
           <link rel="icon" href="/favicon" />
+
+          {/* SEO Metadata */}
+          <title>{siteName}</title>
+          <meta name="description" content={siteDescription} />
+          <meta property="og:title" content={siteName} />
+          <meta property="og:description" content={siteDescription} />
+          <meta property="og:type" content="website" />
+          {siteAvatar && <meta property="og:image" content={siteAvatar} />}
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={siteName} />
+          <meta name="twitter:description" content={siteDescription} />
+          {siteAvatar && <meta name="twitter:image" content={siteAvatar} />}
+
+          {/* Site Verification */}
           {googleVerification && (
             <meta name="google-site-verification" content={googleVerification} />
           )}
           {microsoftVerification && (
             <meta name="msvalidate.01" content={microsoftVerification} />
           )}
+
+          {/* Analytics Scripts */}
           {googleAnalyticsId && (
             <script async src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`} />
           )}

@@ -126,8 +126,10 @@ bun run deploy:client
 - `WORKER_NAME`, `PAGES_NAME`, `DB_NAME` - 资源名称
 - `NAME`, `DESCRIPTION`, `AVATAR` - 站点配置
 - `R2_BUCKET_NAME` - 要使用的特定 R2 存储桶
-- `GOOGLE_VERIFICATION`, `MICROSOFT_VERIFICATION` - 用于搜索引擎的站点验证代号
-- `GOOGLE_ANALYTICS_ID`, `MICROSOFT_CLARITY_ID` - 站点统计分析 ID
+- `GOOGLE_VERIFICATION`, `MICROSOFT_VERIFICATION` - 用于搜索引擎的站点验证代号（如 Google Search Console、Bing Webmaster Tools）
+- `GOOGLE_ANALYTICS_ID`, `MICROSOFT_CLARITY_ID` - 站点统计分析 ID（如 GA4 的 G-XXXXX、Clarity 项目 ID）
+
+> **关于 SEO**: Rin 会根据配置中的站点名称、描述和头像自动生成 SEO 友好的元数据（Open Graph、Twitter Cards），有助于搜索引擎收录和社交媒体传播。
 
 完整文档请访问 https://docs.openrin.org。
 
