@@ -26,8 +26,8 @@ export function TimelinePage() {
                 const arr = Array.isArray(data) ? data : []
                 setLength(arr.length)
                 // 兼容的分组逻辑
-                const groups = (Object.groupBy
-                    ? Object.groupBy(arr, ({ createdAt }) => new Date(createdAt).getFullYear())
+                const groups = ((Object as any).groupBy
+                    ? (Object as any).groupBy(arr, ({ createdAt }: any) => new Date(createdAt).getFullYear())
                     : arr.reduce<Record<number, any[]>>((acc, item) => {
                         const key = new Date(item.createdAt).getFullYear()
                         ;(acc[key] ||= []).push(item)

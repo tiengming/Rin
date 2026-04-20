@@ -266,6 +266,7 @@ export function FeedService(): Hono<{
     app.get("/adjacent/:id", async (c) => {
         const db = c.get('db');
         const cache = c.get('cache');
+        const admin = c.get('admin');
         const id = c.req.param('id');
         let id_num: number;
 

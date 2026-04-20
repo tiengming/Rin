@@ -175,7 +175,7 @@ describe('CommentService', () => {
             env.WEBHOOK_URL = 'not-a-valid-url' as any;
             globalThis.fetch = mock(async () => {
                 throw new TypeError('Invalid URL');
-            }) as typeof fetch;
+            }) as any;
 
             const res = await app.request('/1', {
                 method: 'POST',
