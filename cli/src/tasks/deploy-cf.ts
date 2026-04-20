@@ -162,6 +162,10 @@ export async function runCloudflareDeploy(target: "all" | "server" | "client" = 
   const avatar = env("AVATAR", "");
   const pageSize = env("PAGE_SIZE", "5");
   const rssEnable = env("RSS_ENABLE", "false");
+  const googleVerification = env("GOOGLE_VERIFICATION", "");
+  const microsoftVerification = env("MICROSOFT_VERIFICATION", "");
+  const googleAnalyticsId = env("GOOGLE_ANALYTICS_ID", "");
+  const microsoftClarityId = env("MICROSOFT_CLARITY_ID", "");
 
   let finalS3Endpoint = s3Endpoint;
   let finalS3Bucket = s3Bucket;
@@ -214,6 +218,10 @@ export async function runCloudflareDeploy(target: "all" | "server" | "client" = 
       AVATAR = "${avatar}"
       PAGE_SIZE = "${pageSize}"
       RSS_ENABLE = "${rssEnable}"
+      GOOGLE_VERIFICATION = "${googleVerification}"
+      MICROSOFT_VERIFICATION = "${microsoftVerification}"
+      GOOGLE_ANALYTICS_ID = "${googleAnalyticsId}"
+      MICROSOFT_CLARITY_ID = "${microsoftClarityId}"
 
       [placement]
       mode = "smart"

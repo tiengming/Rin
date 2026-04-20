@@ -126,6 +126,10 @@ The repository includes several automated workflows:
 - `WORKER_NAME`, `PAGES_NAME`, `DB_NAME` - Resource names
 - `NAME`, `DESCRIPTION`, `AVATAR` - Site configuration
 - `R2_BUCKET_NAME` - Specific R2 bucket to use
+- `GOOGLE_VERIFICATION`, `MICROSOFT_VERIFICATION` - Site verification codes for search engines (e.g., Google Search Console, Bing Webmaster Tools)
+- `GOOGLE_ANALYTICS_ID`, `MICROSOFT_CLARITY_ID` - Analytics tracking IDs (e.g., GA4 G-XXXXX, Clarity project ID)
+
+> **Note on SEO**: Rin automatically generates SEO-friendly metadata (Open Graph, Twitter Cards) based on your site name, description, and avatar provided in the configuration.
 
 Full documentation is available at https://docs.openrin.org.
 
