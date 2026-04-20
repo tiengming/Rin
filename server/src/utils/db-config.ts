@@ -67,9 +67,9 @@ export async function getFrontendAIEnabled(config: ConfigReader): Promise<boolea
     return enabled == null ? DEFAULT_AI_CONFIG.enabled : enabled === true || enabled === "true";
 }
 
-export async function setAIConfig(config: ConfigWriter, updates: Partial<AIConfig> & { image_model?: string }): Promise<void> {
+export async function setAIConfig(config: ConfigWriter, updates: Partial<AIConfig>): Promise<void> {
     for (const field of AI_CONFIG_FIELDS) {
-        const value = (updates as any)[field];
+        const value = updates[field];
         if (value === undefined) {
             continue;
         }

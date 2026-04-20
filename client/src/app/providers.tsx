@@ -32,10 +32,16 @@ export function AppProviders({
           {/* SEO Metadata */}
           <title>{siteName}</title>
           <meta name="description" content={siteDescription} />
+          <meta name="robots" content="index, follow" />
+          <link rel="canonical" href={window.location.origin} />
+
+          <meta property="og:site_name" content={siteName} />
           <meta property="og:title" content={siteName} />
           <meta property="og:description" content={siteDescription} />
           <meta property="og:type" content="website" />
+          <meta property="og:url" content={window.location.origin} />
           {siteAvatar && <meta property="og:image" content={siteAvatar} />}
+
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={siteName} />
           <meta name="twitter:description" content={siteDescription} />

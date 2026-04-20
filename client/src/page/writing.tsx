@@ -142,20 +142,20 @@ export function WritingPage({ id }: { id?: number }) {
     setAiLoading(action);
     try {
       if (action === 'summary') {
-        const { data, error } = await (client as any).config.aiSummary({ content });
+        const { data, error } = await client.config.aiSummary({ content });
         if (data?.summary) setSummary(data.summary);
         else if (error) showAlert(error.value);
       } else if (action === 'tags') {
-        const { data, error } = await (client as any).config.aiTags({ content });
+        const { data, error } = await client.config.aiTags({ content });
         if (data?.tags) setTags(data.tags.map((t: string) => `#${t}`).join(' '));
         else if (error) showAlert(error.value);
       } else if (action === 'reformat') {
-        const { data, error } = await (client as any).config.aiReformat({ content });
+        const { data, error } = await client.config.aiReformat({ content });
         if (data?.content) setContent(data.content);
         else if (error) showAlert(error.value);
       } else if (action === 'image') {
         const prompt = title || "A beautiful cover image for a blog post";
-        const { data, error } = await (client as any).config.aiImage({ prompt });
+        const { data, error } = await client.config.aiImage({ prompt });
         if (data?.url) {
           const imgMarkdown = `\n![AI Cover](${data.url})\n`;
           setContent(imgMarkdown + content);

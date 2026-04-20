@@ -4,7 +4,7 @@ export function stripMarkdownImages(content: string) {
     return content.replace(/!\[.*?\]\((\S+?)(?:\s+"[^"]*")?\)/g, "").trim();
 }
 
-export function transformFeedItem(item: any, admin = false) {
+export function transformFeedItem(item: any, _admin = false) {
     const { content, hashtags, summary, ...other } = item;
     const avatar = extractImageWithMetadata(content);
 
