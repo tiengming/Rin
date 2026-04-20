@@ -6,10 +6,12 @@ import {
     testAIModel,
     AI_TEXT_MODELS,
     AI_IMAGE_MODELS,
+    AI_AUDIO_MODELS,
     executeAITask,
     AI_TAGS_SYSTEM_PROMPT,
     AI_REFORMAT_SYSTEM_PROMPT,
-    generateAIImage
+    generateAIImage,
+    generateAISummaryResult
 } from "../utils/ai";
 import { notify } from "../utils/webhook";
 import { putStorageObject } from "../utils/storage";
@@ -83,6 +85,7 @@ export function ConfigService(): Hono {
         return c.json({
             text: AI_TEXT_MODELS,
             image: AI_IMAGE_MODELS,
+            audio: AI_AUDIO_MODELS,
         });
     });
 

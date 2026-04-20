@@ -37,6 +37,8 @@ export const AI_TEXT_MODELS = [
 
 export const AI_IMAGE_MODELS = ["stable-diffusion-xl", "dreamshaper-8"];
 
+export const AI_AUDIO_MODELS = ["whisper"];
+
 export const AI_SUMMARY_SYSTEM_PROMPT =
     "你是一个专业的中文内容摘要专家。请根据用户提供的文章内容，生成一段简洁、精准且吸引人的摘要。要求：\n1. 使用自然平实的中文，不要使用AI感明显的词汇（如'本文通过...','综上所述'等）。\n2. 摘要长度控制在150-300字之间，确保信息完整且不被切断。\n3. 直接输出摘要内容，不要包含标题、项目符号或任何前缀。";
 
