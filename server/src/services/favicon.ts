@@ -10,6 +10,7 @@ export const FAVICON_ALLOWED_TYPES: { [key: string]: string } = {
     "image/png": ".png",
     "image/gif": ".gif",
     "image/webp": ".webp",
+    "image/svg+xml": ".svg",
 };
 
 export function getFaviconKey(env: Env) {

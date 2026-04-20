@@ -337,10 +337,11 @@ describe('FaviconService', () => {
             expect(FAVICON_ALLOWED_TYPES['image/png']).toBe('.png');
             expect(FAVICON_ALLOWED_TYPES['image/gif']).toBe('.gif');
             expect(FAVICON_ALLOWED_TYPES['image/webp']).toBe('.webp');
+            expect(FAVICON_ALLOWED_TYPES['image/svg+xml']).toBe('.svg');
         });
 
         it('should have correct number of allowed types', () => {
-            expect(Object.keys(FAVICON_ALLOWED_TYPES).length).toBe(4);
+            expect(Object.keys(FAVICON_ALLOWED_TYPES).length).toBe(5);
         });
     });
 
