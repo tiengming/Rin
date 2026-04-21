@@ -39,10 +39,12 @@ export const AI_TEXT_MODELS = [
     "deepseek-r1-distill-qwen-32b",
     "llama-3.3-70b",
     "llama-3.1-8b",
+    "llama-3-8b",
     "qwen-2.5-coder-32b",
     "qwen-2.5-7b",
     "mistral-7b-v0.3",
-    "gemma-2b"
+    "gemma-2b",
+    "qwen-7b"
 ];
 
 export const AI_IMAGE_MODELS = ["flux-1-schnell", "stable-diffusion-xl", "dreamshaper-8"];
@@ -50,10 +52,10 @@ export const AI_IMAGE_MODELS = ["flux-1-schnell", "stable-diffusion-xl", "dreams
 export const AI_AUDIO_MODELS = ["whisper"];
 
 export const AI_SUMMARY_SYSTEM_PROMPT =
-    "你是一个专业的中文内容摘要专家。请根据用户提供的文章内容，生成一段简洁、精准且吸引人的摘要。要求：\n1. 使用自然平实的中文，不要使用AI感明显的词汇（如'本文通过...','综上所述'等）。\n2. 摘要长度控制在150-300字之间，确保信息完整且不被切断。\n3. 直接输出摘要内容，不要包含标题、项目符号或任何前缀。";
+    "你是一个专业的中文内容摘要专家。请根据用户提供的文章内容，生成一段简洁、精准且吸引人的摘要。要求：\n1. 使用自然平实的中文，不要使用AI感明显的词汇（如'本文通过...','综上所述'等）。\n2. 摘要应包含文章核心要点，长度控制在150-300字之间。请务必保证输出内容的完整性，不要在句子中途停止。\n3. 直接输出摘要内容，不要包含标题、项目符号或任何前缀。";
 
 export const AI_TAGS_SYSTEM_PROMPT =
-    "你是一个文章标签提取助手。请根据用户提供的文章内容，提取3-5个最相关的中文标签。要求：\n1. 标签应简短有力，每个不超过6个字。\n2. 直接输出标签，以空格分隔，不要输出任何其他内容。";
+    "你是一个文章标签提取助手。请根据用户提供的文章内容，提取3-5个最相关的中文标签。要求：\n1. 标签应简短有力，每个不超过6个字。\n2. 优先提取核心主题、技术栈或关键人物。\n3. 直接输出标签，以空格分隔，不要输出任何其他内容。";
 
 export const AI_REFORMAT_SYSTEM_PROMPT =
     "你是一个专业的排版助手。请对用户提供的Markdown文章进行优化排版。要求：\n1. 修复错别字和不通顺的句子。\n2. 统一标点符号（使用全角中文标点）。\n3. 在中英文之间增加空格。\n4. 优化层级结构，确保逻辑清晰。\n5. 保持原文的Markdown格式，不要修改核心意思。";
@@ -349,8 +351,37 @@ export async function generateAISummaryResult(
     serverConfig: ConfigReader,
     content: string
 ): Promise<{ summary: string | null; skipped: boolean; error?: string }> {
-    const { result, skipped, error } = await executeAITask(env, serverConfig, content, AI_SUMMARY_SYSTEM_PROMPT, 512);
-    return { summary: result, skipped, error };
+    // For large articles, we only use the first 5000 characters to ensure robustness
+    // Usually the beginning of an article contains the core information needed for a summary.
+    // We strip markdown images and excessive whitespace first.
+    const cleanContent = content
+        .replace(/!\[.*?\]\(.*?\)/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const summaryInput = cleanContent.length > 5000 ? cleanContent.slice(0, 5000) : cleanContent;
+    const { result, skipped, error } = await executeAITask(env, serverConfig, summaryInput, AI_SUMMARY_SYSTEM_PROMPT, 512);
+
+    // Ensure the summary is not cut off in the middle of a sentence
+    let finalSummary = result;
+    if (finalSummary && finalSummary.length > 0) {
+        // Find the last complete sentence punctuation
+        const punctuations = ['。', '！', '？', '.', '!', '?'];
+        let lastIdx = -1;
+        for (const p of punctuations) {
+            lastIdx = Math.max(lastIdx, finalSummary.lastIndexOf(p));
+        }
+
+        if (lastIdx !== -1 && lastIdx < finalSummary.length - 1) {
+            // If the summary is long enough, cut it at the last punctuation.
+            // If it's too short, we keep it as is (maybe the AI just didn't finish).
+            if (lastIdx > 100) {
+                finalSummary = finalSummary.slice(0, lastIdx + 1);
+            }
+        }
+    }
+
+    return { summary: finalSummary, skipped, error };
 }
 
 /**

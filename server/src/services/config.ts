@@ -87,10 +87,22 @@ export function ConfigService(): Hono {
         try {
             if (env.AI && typeof env.AI.models === 'function') {
                 const allModels = await env.AI.models();
-                // Filter and categorize high-performance / popular models
-                // Note: Models with "certified" or "popular" tags or specific names
+
+                const textTaskIds = ['text-generation', 'summarization'];
+                const textModels = allModels
+                    .filter(m => textTaskIds.includes(m.task.id))
+                    .sort((a, b) => {
+                        // Prioritize popular models
+                        const aPop = a.properties?.find((p: any) => p.property_id === 'popular')?.value === 'true';
+                        const bPop = b.properties?.find((p: any) => p.property_id === 'popular')?.value === 'true';
+                        if (aPop && !bPop) return -1;
+                        if (!aPop && bPop) return 1;
+                        return 0;
+                    })
+                    .map(m => m.id);
+
                 return c.json({
-                    text: allModels.filter(m => m.task.id === 'text-generation').map(m => m.id),
+                    text: textModels,
                     image: allModels.filter(m => m.task.id === 'text-to-image').map(m => m.id),
                     audio: allModels.filter(m => m.task.id === 'speech-to-text').map(m => m.id),
                     raw: true
