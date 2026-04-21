@@ -125,7 +125,7 @@ export function Markdown({ content }: { content: string }) {
 
   const Content = useMemo(() => (
     <ReactMarkdown
-      className="toc-content dark:text-neutral-300"
+      className="toc-content prose prose-neutral dark:prose-invert max-w-none t-primary text-[16px] leading-[1.8] tracking-normal"
       remarkPlugins={[gfm, remarkMermaid, remarkMath, remarkAlert]}
       children={content}
       rehypePlugins={[rehypeKatex, rehypeRaw]}
@@ -238,7 +238,7 @@ export function Markdown({ content }: { content: string }) {
         blockquote({ children, ...props }) {
           return (
             <blockquote
-              className="border-l-4 border-gray-300 dark:border-gray-500 pl-4 italic text-gray-500 dark:text-gray-400"
+              className="border-l-4 border-theme/40 bg-theme/5 px-6 py-1 my-6 italic text-neutral-600 dark:text-neutral-400 rounded-r-lg"
               {...props}
             >
               {children}
@@ -299,7 +299,7 @@ export function Markdown({ content }: { content: string }) {
             <h1
               id={children?.toString()}
               {...props}
-              className={`${props.className || ""} text-3xl font-bold mt-4`.trim()}
+              className={`${props.className || ""} text-3xl font-bold mt-8 mb-6 pb-2 border-b border-black/5 dark:border-white/5`.trim()}
               style={{ ...props.style, scrollMarginTop: "var(--header-scroll-offset, 7rem)" }}
             >
               {children}
@@ -311,7 +311,7 @@ export function Markdown({ content }: { content: string }) {
             <h2
               id={children?.toString()}
               {...props}
-              className={`${props.className || ""} text-2xl font-bold mt-4`.trim()}
+              className={`${props.className || ""} text-2xl font-bold mt-8 mb-4`.trim()}
               style={{ ...props.style, scrollMarginTop: "var(--header-scroll-offset, 7rem)" }}
             >
               {children}
@@ -368,7 +368,7 @@ export function Markdown({ content }: { content: string }) {
         },
         p({ children, node, ...props }) {
           return (
-            <p className="mt-2 py-1" {...props}>
+            <p className="mt-4 mb-4 leading-8 text-neutral-800 dark:text-neutral-300" {...props}>
               {children}
             </p>
           );

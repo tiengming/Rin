@@ -84,6 +84,7 @@ export function DateTimeInput({
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [inputValue, setInputValue] = useState(() => value ? formatDisplay(value) : "");
   const [cursor, setCursor] = useState<Date>(value ? new Date(value) : new Date());
   const [hours, setHours] = useState(() => `${value?.getHours() ?? 0}`.padStart(2, "0"));
   const [minutes, setMinutes] = useState(() => `${value?.getMinutes() ?? 0}`.padStart(2, "0"));
@@ -93,6 +94,9 @@ export function DateTimeInput({
       setCursor(new Date(value));
       setHours(`${value.getHours()}`.padStart(2, "0"));
       setMinutes(`${value.getMinutes()}`.padStart(2, "0"));
+      setInputValue(formatDisplay(value));
+    } else {
+      setInputValue("");
     }
   }, [value]);
 
@@ -133,19 +137,32 @@ export function DateTimeInput({
 
   return (
     <div ref={rootRef} className={`relative min-w-0 ${className ?? ""}`}>
-      <button
-        type="button"
-        onClick={() => {
-          setCursor(value ? new Date(value) : new Date());
-          setIsOpen((current) => !current);
-        }}
-        className="flex w-full items-center justify-between gap-3 rounded-xl border border-black/10 bg-w px-4 py-2 text-left text-sm t-primary transition-colors hover:border-black/20 focus:outline-none focus:ring-2 focus:ring-theme/10 dark:border-white/10 dark:hover:border-white/20"
-      >
-        <span className={value ? "t-primary" : "text-neutral-400 dark:text-neutral-500"}>
-          {value ? formatDisplay(value) : "Select date and time"}
-        </span>
-        <i className={`ri-calendar-line text-base text-neutral-400 transition-transform ${isOpen ? "text-theme" : ""}`} />
-      </button>
+      <div className="flex w-full items-center justify-between gap-3 rounded-xl border border-black/10 bg-w px-4 py-2 text-left text-sm t-primary transition-colors hover:border-black/20 focus-within:ring-2 focus-within:ring-theme/10 dark:border-white/10 dark:hover:border-white/20">
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => {
+            setInputValue(e.target.value);
+            const parsed = new Date(e.target.value);
+            if (!isNaN(parsed.getTime())) {
+              onChange(parsed);
+            }
+          }}
+          onFocus={() => {
+            setCursor(value ? new Date(value) : new Date());
+            setIsOpen(true);
+          }}
+          placeholder="YYYY-MM-DD HH:mm"
+          className="w-full bg-transparent outline-none t-primary placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+        />
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="shrink-0"
+        >
+          <i className={`ri-calendar-line text-base text-neutral-400 transition-transform ${isOpen ? "text-theme" : ""}`} />
+        </button>
+      </div>
 
       {isOpen ? (
         <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-[20rem] rounded-2xl border border-black/10 bg-w p-4 shadow-lg dark:border-white/10">

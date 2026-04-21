@@ -45,6 +45,7 @@ export function AISummarySettings({
   const { showAlert, AlertUI } = useAlert();
   const providerFields = getAIProviderFields(value.provider);
   const [workersModels, setWorkersModels] = useState<{ text: string[], image: string[], audio: string[] } | null>(null);
+  const [fetchingModels, setFetchingModels] = useState(false);
 
   useEffect(() => {
     if (value.provider === "worker-ai" && !workersModels) {
@@ -64,13 +65,14 @@ export function AISummarySettings({
   };
 
   const handleFetchWorkersModels = async (silent: boolean = false) => {
+    setFetchingModels(true);
     try {
       const { data } = await client.config.aiModels();
-      if (data?.text) {
+      if (data) {
         setWorkersModels({
-          text: data.text,
-          image: data.image,
-          audio: data.audio
+          text: data.text || [],
+          image: data.image || [],
+          audio: data.audio || []
         });
         if (silent !== true) {
           showAlert(t("settings.ai_summary.models_loaded"));
@@ -78,6 +80,8 @@ export function AISummarySettings({
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setFetchingModels(false);
     }
   };
 
@@ -197,7 +201,7 @@ export function AISummarySettings({
                         className="rounded-xl border border-black/10 bg-button px-3 text-xs t-primary hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/5"
                         title={t("settings.ai_summary.fetch_models")}
                       >
-                        🔄
+                        {fetchingModels ? <ReactLoading type="spin" width="1.2em" height="1.2em" color="currentColor" /> : "🔄"}
                       </button>
                     )}
                   </div>
