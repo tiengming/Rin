@@ -48,7 +48,7 @@ export function AISummarySettings({
 
   useEffect(() => {
     if (value.provider === "worker-ai" && !workersModels) {
-      handleFetchWorkersModels();
+      handleFetchWorkersModels(true);
     }
   }, [value.provider]);
 
@@ -63,7 +63,7 @@ export function AISummarySettings({
     });
   };
 
-  const handleFetchWorkersModels = async () => {
+  const handleFetchWorkersModels = async (silent: boolean = false) => {
     try {
       const { data } = await client.config.aiModels();
       if (data?.text) {
@@ -72,7 +72,9 @@ export function AISummarySettings({
           image: data.image,
           audio: data.audio
         });
-        showAlert(t("settings.ai_summary.models_loaded"));
+        if (silent !== true) {
+          showAlert(t("settings.ai_summary.models_loaded"));
+        }
       }
     } catch (err) {
       console.error(err);
@@ -191,7 +193,7 @@ export function AISummarySettings({
                     </div>
                     {value.provider === 'worker-ai' && (
                       <button
-                        onClick={handleFetchWorkersModels}
+                        onClick={() => handleFetchWorkersModels(false)}
                         className="rounded-xl border border-black/10 bg-button px-3 text-xs t-primary hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/5"
                         title={t("settings.ai_summary.fetch_models")}
                       >

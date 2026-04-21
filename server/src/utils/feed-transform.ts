@@ -1,4 +1,4 @@
-import { extractImageWithMetadata } from "./image";
+import { listContentImageUrls } from "./image";
 
 export function stripMarkdownImages(content: string) {
     return content.replace(/!\[.*?\]\((\S+?)(?:\s+"[^"]*")?\)/g, "").trim();
@@ -6,7 +6,8 @@ export function stripMarkdownImages(content: string) {
 
 export function transformFeedItem(item: any, _admin = false) {
     const { content, hashtags, summary, ...other } = item;
-    const avatar = extractImageWithMetadata(content);
+    const images = listContentImageUrls(content);
+    const avatar = images.length > 0 ? images[0] : undefined;
 
     let cleanSummary = summary;
     if (!cleanSummary || cleanSummary.length === 0) {
