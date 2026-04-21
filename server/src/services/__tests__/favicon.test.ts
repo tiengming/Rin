@@ -134,10 +134,23 @@ describe('FaviconService', () => {
 
     describe('GET / - Get favicon', () => {
         it('should return favicon from S3', async () => {
-            const res = await app.request('/', { method: 'GET' }, env);
+            // Mock successful fetch for storage
+            const originalFetch = globalThis.fetch;
+            globalThis.fetch = (async (input: any) => {
+                const url = typeof input === 'string' ? input : input.url;
+                if (url.includes('favicon.webp')) {
+                    return new Response('webp-data', { status: 200, headers: { 'Content-Type': 'image/webp' } });
+                }
+                return new Response(null, { status: 404 });
+            }) as any;
 
-            // Will fail due to S3 not being available, but verifies route is registered
-            expect(res.status).not.toBe(404);
+            try {
+                const res = await app.request('/', { method: 'GET' }, env);
+                expect(res.status).toBe(200);
+                expect(res.headers.get('content-type')).toBe('image/webp');
+            } finally {
+                globalThis.fetch = originalFetch;
+            }
         });
 
         it('should generate favicon from site avatar when favicon is missing', async () => {
@@ -319,10 +332,22 @@ describe('FaviconService', () => {
 
     describe('GET /original - Get original favicon', () => {
         it('should return original favicon from S3', async () => {
-            const res = await app.request('/original', { method: 'GET' }, env);
+            const originalFetch = globalThis.fetch;
+            globalThis.fetch = (async (input: any) => {
+                const url = typeof input === 'string' ? input : input.url;
+                if (url.includes('originFavicon.png')) {
+                    return new Response('png-data', { status: 200, headers: { 'Content-Type': 'image/png' } });
+                }
+                return new Response(null, { status: 404 });
+            }) as any;
 
-            // Will fail due to S3 not being available, but verifies route is registered
-            expect(res.status).not.toBe(404);
+            try {
+                const res = await app.request('/original', { method: 'GET' }, env);
+                expect(res.status).toBe(200);
+                expect(res.headers.get('content-type')).toBe('image/png');
+            } finally {
+                globalThis.fetch = originalFetch;
+            }
         });
     });
 

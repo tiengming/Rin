@@ -92,20 +92,30 @@ function extractAIText(response: unknown): string | null {
         text = response;
     } else if (response && typeof response === "object") {
         const responseObj = response as Record<string, any>;
+
         if (typeof responseObj.response === "string") text = responseObj.response;
         else if (typeof responseObj.content === "string") text = responseObj.content;
         else if (typeof responseObj.output === "string") text = responseObj.output;
         else if (typeof responseObj.result === "string") text = responseObj.result;
         else if (typeof responseObj.result?.response === "string") text = responseObj.result.response;
         else if (typeof responseObj.result?.text === "string") text = responseObj.result.text;
+        else if (typeof responseObj.result?.completion === "string") text = responseObj.result.completion;
         else {
-            const messageContent = responseObj.choices?.[0]?.message?.content;
-            if (typeof messageContent === "string" && messageContent.trim()) {
-                text = messageContent.trim();
-            } else {
-                const outputText = responseObj.output?.[0]?.content?.[0]?.text;
-                if (typeof outputText === "string" && outputText.trim()) {
-                    text = outputText.trim();
+            const choices = responseObj.choices;
+            if (Array.isArray(choices) && choices.length > 0) {
+                const message = choices[0].message;
+                if (message && typeof message.content === "string") {
+                    text = message.content.trim();
+                }
+            }
+
+            if (!text) {
+                const output = responseObj.output;
+                if (Array.isArray(output) && output.length > 0 && Array.isArray(output[0].content)) {
+                    const contentItem = output[0].content[0];
+                    if (contentItem && typeof contentItem.text === "string") {
+                        text = contentItem.text.trim();
+                    }
                 }
             }
         }
@@ -228,7 +238,7 @@ async function executeExternalAI(
     }
 
     const data = await response.json() as any;
-    return data.choices?.[0]?.message?.content?.trim() || null;
+    return extractAIText(data);
 }
 
 /**

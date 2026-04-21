@@ -7,7 +7,7 @@ import {
   SettingsCardRow,
 } from "@rin/ui";
 import * as Switch from "@radix-ui/react-switch";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ReactLoading from "react-loading";
 import { client } from "../app/runtime";
@@ -45,6 +45,12 @@ export function AISummarySettings({
   const { showAlert, AlertUI } = useAlert();
   const providerFields = getAIProviderFields(value.provider);
   const [workersModels, setWorkersModels] = useState<{ text: string[], image: string[], audio: string[] } | null>(null);
+
+  useEffect(() => {
+    if (value.provider === "worker-ai" && !workersModels) {
+      handleFetchWorkersModels();
+    }
+  }, [value.provider]);
 
   const handleProviderChange = (nextProvider: string) => {
     const preset = getAIProviderPreset(nextProvider);
@@ -116,9 +122,12 @@ export function AISummarySettings({
     }
   };
 
-  const modelOptions = value.provider === 'worker-ai' && workersModels
-    ? workersModels.text
-    : (AI_MODEL_PRESETS[value.provider] || []);
+  const modelOptions = useMemo(() => {
+    if (value.provider === "worker-ai" && workersModels?.text) {
+      return workersModels.text;
+    }
+    return AI_MODEL_PRESETS[value.provider] || [];
+  }, [value.provider, workersModels]);
 
   return (
     <>
