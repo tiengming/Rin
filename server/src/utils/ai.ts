@@ -104,6 +104,7 @@ function extractAIText(response: unknown): string | null {
 
     // Some models return the text in result.response
     if (typeof responseObj.result?.response === "string") return responseObj.result.response;
+    if (typeof responseObj.result?.text === "string") return responseObj.result.text;
 
     const messageContent = responseObj.choices?.[0]?.message?.content;
     if (typeof messageContent === "string" && messageContent.trim()) {
@@ -133,7 +134,7 @@ async function executeWorkerAI(
     // Worker AI uses messages format for chat models
     const response = await env.AI.run(modelId as any, {
         messages,
-        max_tokens: 1024, // Increase max tokens for summaries and reformatting
+        max_tokens: 2048, // Increase max tokens for summaries and reformatting
     } as any);
 
     return extractAIText(response);
@@ -267,7 +268,7 @@ export async function testAIModel(
         } else {
             return { 
                 success: false, 
-                error: 'Empty response from AI' 
+                error: `Empty response from AI provider "${config.provider}" using model "${config.model}"`
             };
         }
     } catch (error: any) {

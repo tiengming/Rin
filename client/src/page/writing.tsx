@@ -154,7 +154,7 @@ export function WritingPage({ id }: { id?: number }) {
         if (data?.content) setContent(data.content);
         else if (error) showAlert(error.value);
       } else if (action === 'image') {
-        const prompt = title || "A beautiful cover image for a blog post";
+        const prompt = summary || title || "A beautiful cover image for a blog post";
         const { data, error } = await client.config.aiImage({ prompt });
         if (data?.url) {
           const imgMarkdown = `\n![AI Cover](${data.url})\n`;

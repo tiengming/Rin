@@ -646,6 +646,9 @@ export function Settings() {
               if (updates.apiKey !== undefined) {
                 setConfigValue("server", "ai_summary.api_key", updates.apiKey);
               }
+              if (updates.imageModel !== undefined) {
+                setConfigValue("server", "ai_summary.image_model", updates.imageModel);
+              }
             }}
           />
 
