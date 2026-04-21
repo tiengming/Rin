@@ -87,33 +87,35 @@ export function buildExternalAIChatCompletionsUrl(
 }
 
 function extractAIText(response: unknown): string | null {
+    let text = null;
     if (typeof response === "string") {
-        return response;
+        text = response;
+    } else if (response && typeof response === "object") {
+        const responseObj = response as Record<string, any>;
+        if (typeof responseObj.response === "string") text = responseObj.response;
+        else if (typeof responseObj.content === "string") text = responseObj.content;
+        else if (typeof responseObj.output === "string") text = responseObj.output;
+        else if (typeof responseObj.result === "string") text = responseObj.result;
+        else if (typeof responseObj.result?.response === "string") text = responseObj.result.response;
+        else if (typeof responseObj.result?.text === "string") text = responseObj.result.text;
+        else {
+            const messageContent = responseObj.choices?.[0]?.message?.content;
+            if (typeof messageContent === "string" && messageContent.trim()) {
+                text = messageContent.trim();
+            } else {
+                const outputText = responseObj.output?.[0]?.content?.[0]?.text;
+                if (typeof outputText === "string" && outputText.trim()) {
+                    text = outputText.trim();
+                }
+            }
+        }
     }
 
-    if (!response || typeof response !== "object") {
-        return null;
-    }
-
-    const responseObj = response as Record<string, any>;
-
-    if (typeof responseObj.response === "string") return responseObj.response;
-    if (typeof responseObj.content === "string") return responseObj.content;
-    if (typeof responseObj.output === "string") return responseObj.output;
-    if (typeof responseObj.result === "string") return responseObj.result;
-
-    // Some models return the text in result.response
-    if (typeof responseObj.result?.response === "string") return responseObj.result.response;
-    if (typeof responseObj.result?.text === "string") return responseObj.result.text;
-
-    const messageContent = responseObj.choices?.[0]?.message?.content;
-    if (typeof messageContent === "string" && messageContent.trim()) {
-        return messageContent.trim();
-    }
-
-    const outputText = responseObj.output?.[0]?.content?.[0]?.text;
-    if (typeof outputText === "string" && outputText.trim()) {
-        return outputText.trim();
+    if (text) {
+        // Strip reasoning/thinking tags common in models like DeepSeek
+        text = text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+        text = text.replace(/<think>[\s\S]*$/g, "").trim();
+        return text;
     }
 
     return null;
@@ -140,9 +142,6 @@ async function executeWorkerAI(
     return extractAIText(response);
 }
 
-/**
- * Execute Worker AI Image Generation
- */
 async function executeWorkerAIImage(
     env: Env,
     modelId: string,
@@ -160,10 +159,14 @@ async function executeWorkerAIImage(
         return response as ArrayBuffer;
     }
 
-    // Some versions might return a base64 string or an object with image data
+    // Handle JSON response object with base64 encoded image
     const respObj = response as any;
-    if (respObj.image && typeof respObj.image === "string") {
-        const binaryString = atob(respObj.image);
+
+    // Check various common result fields in Workers AI response
+    const base64Image = respObj.image || respObj.result?.image || respObj.dataURI?.split(",")[1];
+
+    if (typeof base64Image === "string") {
+        const binaryString = atob(base64Image);
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
             bytes[i] = binaryString.charCodeAt(i);
@@ -171,9 +174,10 @@ async function executeWorkerAIImage(
         return bytes.buffer;
     }
 
-    // Check for result property (new Workers AI format)
-    if (respObj.result?.image && typeof respObj.result.image === "string") {
-        const binaryString = atob(respObj.result.image);
+    // Check for output array (Flux 2 Dev format)
+    if (Array.isArray(respObj.output) && respObj.output[0]?.bytes) {
+        const base64Bytes = respObj.output[0].bytes;
+        const binaryString = atob(base64Bytes);
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
             bytes[i] = binaryString.charCodeAt(i);
