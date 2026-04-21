@@ -7,6 +7,7 @@ import {
     AI_TEXT_MODELS,
     AI_IMAGE_MODELS,
     AI_AUDIO_MODELS,
+    WORKER_AI_MODELS,
     executeAITask,
     AI_TAGS_SYSTEM_PROMPT,
     AI_REFORMAT_SYSTEM_PROMPT,
@@ -82,10 +83,28 @@ export function ConfigService(): Hono {
 
     // GET /config/ai-models - List available AI models
     app.get('/ai-models', async (c: AppContext) => {
+        const env = c.get('env');
+        try {
+            if (env.AI && typeof env.AI.models === 'function') {
+                const allModels = await env.AI.models();
+                // Filter and categorize high-performance / popular models
+                // Note: Models with "certified" or "popular" tags or specific names
+                return c.json({
+                    text: allModels.filter(m => m.task.id === 'text-generation').map(m => m.id),
+                    image: allModels.filter(m => m.task.id === 'text-to-image').map(m => m.id),
+                    audio: allModels.filter(m => m.task.id === 'speech-to-text').map(m => m.id),
+                    raw: true
+                });
+            }
+        } catch (e) {
+            console.error("Failed to fetch models from Workers AI API:", e);
+        }
+
         return c.json({
-            text: AI_TEXT_MODELS,
-            image: AI_IMAGE_MODELS,
-            audio: AI_AUDIO_MODELS,
+            text: AI_TEXT_MODELS.map(m => WORKER_AI_MODELS[m] || m),
+            image: AI_IMAGE_MODELS.map(m => WORKER_AI_MODELS[m] || m),
+            audio: AI_AUDIO_MODELS.map(m => WORKER_AI_MODELS[m] || m),
+            raw: false
         });
     });
 

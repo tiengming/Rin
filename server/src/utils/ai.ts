@@ -13,29 +13,39 @@ const AI_PROVIDER_URLS: Record<string, string> = {
 };
 
 // Cloudflare Worker AI models mapping (short name -> full model ID)
+// Categorized by high-performance free-tier models (where available)
 export const WORKER_AI_MODELS: Record<string, string> = {
+    // Text Models
+    "llama-3.3-70b": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    "llama-3.1-8b": "@cf/meta/llama-3.1-8b-instruct",
     "llama-3-8b": "@cf/meta/llama-3-8b-instruct",
-    "llama-3-1-8b": "@cf/meta/llama-3.1-8b-instruct",
-    "llama-2-7b": "@cf/meta/llama-2-7b-chat-int8",
-    "mistral-7b": "@cf/mistral/mistral-7b-instruct-v0.1",
-    "mistral-7b-v2": "@cf/mistral/mistral-7b-instruct-v0.2-lora",
+    "qwen-2.5-coder-32b": "@cf/qwen/qwen2.5-coder-32b-instruct",
+    "qwen-2.5-7b": "@cf/qwen/qwen2.5-7b-instruct",
+    "mistral-7b-v0.3": "@cf/mistral/mistral-7b-instruct-v0.3",
     "gemma-2b": "@cf/google/gemma-2b-it-lora",
-    "gemma-7b": "@cf/google/gemma-7b-it-lora",
-    "deepseek-coder": "@cf/deepseek-ai/deepseek-coder-6.7b-base-awq",
-    "qwen-7b": "@cf/qwen/qwen1.5-7b-chat-awq",
+    "deepseek-r1-distill-qwen-32b": "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
+
     // Image Generation Models
+    "flux-1-schnell": "@cf/black-forest-labs/flux-1-schnell",
     "stable-diffusion-xl": "@cf/stabilityai/stable-diffusion-xl-base-1.0",
     "dreamshaper-8": "@cf/lykon/dreamshaper-8-lcm",
+
     // Audio / Speech Models
     "whisper": "@cf/openai/whisper",
+    "whisper-large-v3": "@cf/openai/whisper-large-v3-turbo",
 };
 
 export const AI_TEXT_MODELS = [
-    "llama-3-8b", "llama-3-1-8b", "llama-2-7b", "mistral-7b", "mistral-7b-v2",
-    "gemma-2b", "gemma-7b", "deepseek-coder", "qwen-7b"
+    "deepseek-r1-distill-qwen-32b",
+    "llama-3.3-70b",
+    "llama-3.1-8b",
+    "qwen-2.5-coder-32b",
+    "qwen-2.5-7b",
+    "mistral-7b-v0.3",
+    "gemma-2b"
 ];
 
-export const AI_IMAGE_MODELS = ["stable-diffusion-xl", "dreamshaper-8"];
+export const AI_IMAGE_MODELS = ["flux-1-schnell", "stable-diffusion-xl", "dreamshaper-8"];
 
 export const AI_AUDIO_MODELS = ["whisper"];
 
@@ -89,6 +99,9 @@ function extractAIText(response: unknown): string | null {
     if (typeof responseObj.content === "string") return responseObj.content;
     if (typeof responseObj.output === "string") return responseObj.output;
     if (typeof responseObj.result === "string") return responseObj.result;
+
+    // Some models return the text in result.response
+    if (typeof responseObj.result?.response === "string") return responseObj.result.response;
 
     const messageContent = responseObj.choices?.[0]?.message?.content;
     if (typeof messageContent === "string" && messageContent.trim()) {
@@ -155,7 +168,17 @@ async function executeWorkerAIImage(
         return bytes.buffer;
     }
 
-    throw new Error("Invalid response from Image AI model");
+    // Check for result property (new Workers AI format)
+    if (respObj.result?.image && typeof respObj.result.image === "string") {
+        const binaryString = atob(respObj.result.image);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes.buffer;
+    }
+
+    throw new Error(`Invalid response from Image AI model: ${JSON.stringify(response).slice(0, 100)}`);
 }
 
 /**

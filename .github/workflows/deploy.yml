@@ -185,10 +185,6 @@ jobs:
           echo "avatar=${REPO_AVATAR}" >> $GITHUB_OUTPUT
           echo "page_size=${REPO_PAGE_SIZE}" >> $GITHUB_OUTPUT
           echo "rss_enable=${REPO_RSS_ENABLE}" >> $GITHUB_OUTPUT
-          echo "google_verification=${{ vars.GOOGLE_VERIFICATION }}" >> $GITHUB_OUTPUT
-          echo "microsoft_verification=${{ vars.MICROSOFT_VERIFICATION }}" >> $GITHUB_OUTPUT
-          echo "google_analytics_id=${{ vars.GOOGLE_ANALYTICS_ID }}" >> $GITHUB_OUTPUT
-          echo "microsoft_clarity_id=${{ vars.MICROSOFT_CLARITY_ID }}" >> $GITHUB_OUTPUT
 
       - name: Deploy to Cloudflare
         id: deploy
@@ -202,10 +198,10 @@ jobs:
           AVATAR: ${{ steps.config.outputs.avatar || '' }}
           PAGE_SIZE: ${{ steps.config.outputs.page_size || '5' }}
           RSS_ENABLE: ${{ steps.config.outputs.rss_enable || 'false' }}
-          GOOGLE_VERIFICATION: ${{ steps.config.outputs.google_verification || '' }}
-          MICROSOFT_VERIFICATION: ${{ steps.config.outputs.microsoft_verification || '' }}
-          GOOGLE_ANALYTICS_ID: ${{ steps.config.outputs.google_analytics_id || '' }}
-          MICROSOFT_CLARITY_ID: ${{ steps.config.outputs.microsoft_clarity_id || '' }}
+          GOOGLE_VERIFICATION: ${{ vars.GOOGLE_VERIFICATION || '' }}
+          MICROSOFT_VERIFICATION: ${{ vars.MICROSOFT_VERIFICATION || '' }}
+          GOOGLE_ANALYTICS_ID: ${{ vars.GOOGLE_ANALYTICS_ID || '' }}
+          MICROSOFT_CLARITY_ID: ${{ vars.MICROSOFT_CLARITY_ID || '' }}
           S3_CACHE_FOLDER: ${{ vars.S3_CACHE_FOLDER || 'cache/' }}
           S3_FOLDER: ${{ vars.S3_FOLDER || 'images/' }}
           S3_REGION: ${{ vars.S3_REGION || 'auto' }}
@@ -225,10 +221,6 @@ jobs:
           RSS_TITLE: ${{ vars.RSS_TITLE || '' }}
           RSS_DESCRIPTION: ${{ vars.RSS_DESCRIPTION || '' }}
           CACHE_STORAGE_MODE: ${{ vars.CACHE_STORAGE_MODE || 's3' }}
-          GOOGLE_VERIFICATION: ${{ vars.GOOGLE_VERIFICATION || '' }}
-          MICROSOFT_VERIFICATION: ${{ vars.MICROSOFT_VERIFICATION || '' }}
-          GOOGLE_ANALYTICS_ID: ${{ vars.GOOGLE_ANALYTICS_ID || '' }}
-          MICROSOFT_CLARITY_ID: ${{ vars.MICROSOFT_CLARITY_ID || '' }}
         run: |
           set -euo pipefail
           if [[ "${{ needs.prepare.outputs.is_production }}" == "true" ]]; then
