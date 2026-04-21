@@ -537,7 +537,7 @@ class ConfigAPI {
     return this.http.post("/api/config/test-webhook", body);
   }
 
-  async aiModels(): Promise<ApiResponse<{ text: string[]; image: string[] }>> {
+  async aiModels(): Promise<ApiResponse<{ text: string[]; image: string[]; audio: string[] }>> {
     return this.http.get("/api/config/ai-models");
   }
 

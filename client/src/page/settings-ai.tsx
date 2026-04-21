@@ -44,6 +44,7 @@ export function AISummarySettings({
   const [testResult, setTestResult] = useState<{ success?: boolean; response?: string; error?: string; details?: string } | null>(null);
   const { showAlert, AlertUI } = useAlert();
   const providerFields = getAIProviderFields(value.provider);
+  const [workersModels, setWorkersModels] = useState<{ text: string[], image: string[], audio: string[] } | null>(null);
 
   const handleProviderChange = (nextProvider: string) => {
     const preset = getAIProviderPreset(nextProvider);
@@ -60,8 +61,11 @@ export function AISummarySettings({
     try {
       const { data } = await client.config.aiModels();
       if (data?.text) {
-        // Here we could update the local state to show more models
-        // But for now, we'll rely on the presets which we've already updated
+        setWorkersModels({
+          text: data.text,
+          image: data.image,
+          audio: data.audio
+        });
         showAlert(t("settings.ai_summary.models_loaded"));
       }
     } catch (err) {
@@ -112,7 +116,9 @@ export function AISummarySettings({
     }
   };
 
-  const modelOptions = AI_MODEL_PRESETS[value.provider] || [];
+  const modelOptions = value.provider === 'worker-ai' && workersModels
+    ? workersModels.text
+    : (AI_MODEL_PRESETS[value.provider] || []);
 
   return (
     <>
@@ -229,16 +235,21 @@ export function AISummarySettings({
                   <div className="space-y-2 lg:col-span-2 mt-4">
                     <p className="text-sm font-medium t-primary">{t("AI 图片生成模型")}</p>
                     <SearchableSelect
-                      value={value.imageModel || "stable-diffusion-xl"}
+                      value={value.imageModel || "@cf/black-forest-labs/flux-1-schnell"}
                       onChange={(nextValue) => {
                         onChange({ imageModel: nextValue });
                       }}
-                      options={[
-                        { label: "Stable Diffusion XL", value: "stable-diffusion-xl" },
-                        { label: "DreamShaper 8", value: "dreamshaper-8" },
-                      ]}
+                      options={workersModels?.image
+                        ? workersModels.image.map(m => ({ label: m, value: m }))
+                        : [
+                          { label: "FLUX.1-schnell", value: "@cf/black-forest-labs/flux-1-schnell" },
+                          { label: "Stable Diffusion XL", value: "@cf/stabilityai/stable-diffusion-xl-base-1.0" },
+                          { label: "DreamShaper 8", value: "@cf/lykon/dreamshaper-8-lcm" },
+                        ]
+                      }
                       placeholder="选择图片生成模型"
-                      searchable={false}
+                      searchable={true}
+                      allowCustomValue
                     />
                   </div>
                 )}
