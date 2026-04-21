@@ -31,13 +31,8 @@ export const AI_MODEL_PRESETS: Record<string, string[]> = {
     "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
     "@cf/meta/llama-3.1-8b-instruct",
     "@cf/qwen/qwen2.5-coder-32b-instruct",
-    "@cf/qwen/qwen2.5-7b-instruct",
-    "@cf/mistral/mistral-7b-instruct-v0.3",
-    "@cf/google/gemma-2b-it-lora",
     "@cf/black-forest-labs/flux-1-schnell",
-    "@cf/stabilityai/stable-diffusion-xl-base-1.0",
-    "@cf/lykon/dreamshaper-8-lcm",
-    "@cf/openai/whisper"
+    "@cf/stabilityai/stable-diffusion-xl-base-1.0"
   ],
   openai: ["gpt-5.2", "gpt-5.1", "gpt-5", "gpt-5-mini", "gpt-5-nano", "gpt-5-pro", "gpt-5.1-codex", "gpt-5.1-codex-max", "gpt-5.1-codex-mini", "gpt-5-codex", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo", "o3", "o3-mini", "o1", "o1-mini", "o1-preview"],
   claude: ["claude-opus-4-5-20251101", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001", "claude-opus-4-5", "claude-sonnet-4-5", "claude-haiku-4-5", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],

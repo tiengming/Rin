@@ -81,30 +81,42 @@ export function ConfigService(): Hono {
         return c.json(result);
     });
 
+
     // GET /config/ai-models - List available AI models
-    app.get('/ai-models', async (c: AppContext) => {
-        const env = c.get('env');
+    app.get("/ai-models", async (c: AppContext) => {
+        const env = c.get("env");
         try {
-            if (env.AI && typeof env.AI.models === 'function') {
+            if (env.AI && typeof env.AI.models === "function") {
                 const allModels = await env.AI.models();
 
-                const textTaskIds = ['text-generation', 'summarization'];
+                const textTaskIds = ["text-generation", "summarization"];
                 const textModels = allModels
                     .filter(m => textTaskIds.includes(m.task.id))
                     .sort((a, b) => {
-                        // Prioritize popular models
-                        const aPop = a.properties?.find((p: any) => p.property_id === 'popular')?.value === 'true';
-                        const bPop = b.properties?.find((p: any) => p.property_id === 'popular')?.value === 'true';
+                        const aId = a.id.toLowerCase();
+                        const bId = b.id.toLowerCase();
+
+                        // Prioritize Reasoning models (DeepSeek, Llama 3.3)
+                        const aReasoning = aId.includes("deepseek") || aId.includes("llama-3.3");
+                        const bReasoning = bId.includes("deepseek") || bId.includes("llama-3.3");
+
+                        if (aReasoning && !bReasoning) return -1;
+                        if (!aReasoning && bReasoning) return 1;
+
+                        // Then Popular models
+                        const aPop = a.properties?.find((p: any) => p.property_id === "popular")?.value === "true";
+                        const bPop = b.properties?.find((p: any) => p.property_id === "popular")?.value === "true";
                         if (aPop && !bPop) return -1;
                         if (!aPop && bPop) return 1;
+
                         return 0;
                     })
                     .map(m => m.id);
 
                 return c.json({
                     text: textModels,
-                    image: allModels.filter(m => m.task.id === 'text-to-image').map(m => m.id),
-                    audio: allModels.filter(m => m.task.id === 'speech-to-text').map(m => m.id),
+                    image: allModels.filter(m => m.task.id === "text-to-image").map(m => m.id),
+                    audio: allModels.filter(m => m.task.id === "speech-to-text").map(m => m.id),
                     raw: true
                 });
             }
