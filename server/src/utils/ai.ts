@@ -44,7 +44,7 @@ export const AI_TEXT_MODELS = [
     "qwen-2.5-7b",
     "mistral-7b-v0.3",
     "gemma-2b",
-    "qwen-7b"
+    "qwen-1.5-7b-chat"
 ];
 
 export const AI_IMAGE_MODELS = ["flux-1-schnell", "stable-diffusion-xl", "dreamshaper-8"];
@@ -64,6 +64,13 @@ export const AI_REFORMAT_SYSTEM_PROMPT =
  * Get full Worker AI model ID from short name
  */
 export function getWorkerAIModelId(shortName: string): string {
+    if (!shortName) return "";
+
+    // If it already looks like a full ID (starts with @cf/ or is a UUID), return it
+    if (shortName.startsWith("@cf/") || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(shortName)) {
+        return shortName;
+    }
+
     return WORKER_AI_MODELS[shortName] || shortName;
 }
 
@@ -144,7 +151,7 @@ async function executeWorkerAI(
     }
 
     // Worker AI uses messages format for chat models
-    const response = await env.AI.run(modelId as any, {
+    const response = await env.AI.run(getWorkerAIModelId(modelId) as any, {
         messages,
         max_tokens: 2048, // Increase max tokens for summaries and reformatting
     } as any);
@@ -168,29 +175,20 @@ async function executeWorkerAIImage(
 
     if (isNewModel) {
         // Use multipart form data for newer models as recommended in recent docs
-        // Also handle potential model-specific requirements
         const form = new FormData();
         form.append("prompt", prompt);
-
-        // Wan and Flux 2 often support higher resolutions
         form.append("width", "1024");
         form.append("height", "1024");
 
-        try {
-            response = await env.AI.run(modelId as any, {
-                multipart: {
-                    body: form as any,
-                    contentType: "multipart/form-data"
-                }
-            } as any);
-        } catch (e) {
-            // Fallback to standard prompt if multipart fails (some accounts/envs might differ)
-            console.error(`Multipart AI run failed for ${modelId}, falling back...`, e);
-            response = await env.AI.run(modelId as any, { prompt } as any);
-        }
+        response = await env.AI.run(getWorkerAIModelId(modelId) as any, {
+            multipart: {
+                body: form as any,
+                contentType: "multipart/form-data"
+            }
+        } as any);
     } else {
         // Standard prompt format
-        response = await env.AI.run(modelId as any, {
+        response = await env.AI.run(getWorkerAIModelId(modelId) as any, {
             prompt
         } as any);
     }
