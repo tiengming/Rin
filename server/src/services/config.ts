@@ -89,7 +89,11 @@ export function ConfigService(): Hono {
             if (env.AI && typeof env.AI.models === "function") {
                 const allModels = await env.AI.models();
 
-                // Broad categories for mapping
+                const mapModel = (m: any) => ({
+                    id: m.id,
+                    name: m.name || m.id.split("/").pop() || m.id
+                });
+
                 const textModels = allModels
                     .filter(m =>
                         m.task?.id === "text-generation" ||
@@ -105,14 +109,14 @@ export function ConfigService(): Hono {
                         if (!aReasoning && bReasoning) return 1;
                         return 0;
                     })
-                    .map(m => m.id);
+                    .map(mapModel);
 
                 const imageModels = allModels
                     .filter(m =>
                         m.task?.id === "text-to-image" ||
                         m.task?.name?.toLowerCase().includes("image")
                     )
-                    .map(m => m.id);
+                    .map(mapModel);
 
                 const audioModels = allModels
                     .filter(m =>
@@ -120,24 +124,25 @@ export function ConfigService(): Hono {
                         m.task?.name?.toLowerCase().includes("speech") ||
                         m.task?.id === "text-to-speech"
                     )
-                    .map(m => m.id);
+                    .map(mapModel);
 
                 return c.json({
-                    text: textModels.length > 0 ? textModels : AI_TEXT_MODELS.map(m => WORKER_AI_MODELS[m] || m),
-                    image: imageModels.length > 0 ? imageModels : AI_IMAGE_MODELS.map(m => WORKER_AI_MODELS[m] || m),
-                    audio: audioModels.length > 0 ? audioModels : AI_AUDIO_MODELS.map(m => WORKER_AI_MODELS[m] || m),
-                    raw: true,
-                    count: allModels.length
+                    text: textModels.length > 0 ? textModels : AI_TEXT_MODELS.map(id => ({ id, name: id.split("/").pop() || id })),
+                    image: imageModels.length > 0 ? imageModels : AI_IMAGE_MODELS.map(id => ({ id, name: id.split("/").pop() || id })),
+                    audio: audioModels.length > 0 ? audioModels : AI_AUDIO_MODELS.map(id => ({ id, name: id.split("/").pop() || id })),
+                    raw: true
                 });
             }
         } catch (e) {
             console.error("Failed to fetch models from Workers AI API:", e);
         }
 
+        const mapPreset = (id: string) => ({ id: WORKER_AI_MODELS[id] || id, name: id });
+
         return c.json({
-            text: AI_TEXT_MODELS.map(m => WORKER_AI_MODELS[m] || m),
-            image: AI_IMAGE_MODELS.map(m => WORKER_AI_MODELS[m] || m),
-            audio: AI_AUDIO_MODELS.map(m => WORKER_AI_MODELS[m] || m),
+            text: AI_TEXT_MODELS.map(mapPreset),
+            image: AI_IMAGE_MODELS.map(mapPreset),
+            audio: AI_AUDIO_MODELS.map(mapPreset),
             raw: false
         });
     });
