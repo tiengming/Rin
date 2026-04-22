@@ -68,7 +68,7 @@ export function SearchableSelect({
   const buttonLabel = selectedOption?.label ?? value ?? placeholder ?? "";
 
   return (
-    <div ref={rootRef} className="relative min-w-[20rem] md:min-w-[24rem] lg:min-w-[28rem]">
+    <div ref={rootRef} className="relative w-full sm:min-w-[20rem] md:min-w-[24rem] lg:min-w-[28rem]">
       <button
         type="button"
         className="flex w-full items-center justify-between gap-3 rounded-xl border border-black/10 bg-w px-4 py-3 text-left text-sm t-primary transition-colors hover:border-black/20 focus:outline-none focus:ring-2 focus:ring-theme/20 dark:border-white/10 dark:hover:border-white/20"
