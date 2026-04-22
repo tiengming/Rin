@@ -168,17 +168,26 @@ async function executeWorkerAIImage(
 
     if (isNewModel) {
         // Use multipart form data for newer models as recommended in recent docs
+        // Also handle potential model-specific requirements
         const form = new FormData();
         form.append("prompt", prompt);
+
+        // Wan and Flux 2 often support higher resolutions
         form.append("width", "1024");
         form.append("height", "1024");
 
-        response = await env.AI.run(modelId as any, {
-            multipart: {
-                body: form as any,
-                contentType: "multipart/form-data"
-            }
-        } as any);
+        try {
+            response = await env.AI.run(modelId as any, {
+                multipart: {
+                    body: form as any,
+                    contentType: "multipart/form-data"
+                }
+            } as any);
+        } catch (e) {
+            // Fallback to standard prompt if multipart fails (some accounts/envs might differ)
+            console.error(`Multipart AI run failed for ${modelId}, falling back...`, e);
+            response = await env.AI.run(modelId as any, { prompt } as any);
+        }
     } else {
         // Standard prompt format
         response = await env.AI.run(modelId as any, {
