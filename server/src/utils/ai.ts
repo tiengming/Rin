@@ -66,17 +66,21 @@ export const AI_REFORMAT_SYSTEM_PROMPT =
 export function getWorkerAIModelId(shortName: string): string {
     if (!shortName) return "";
 
-    // If it starts with @cf/, it is likely a correct model ID
+    // If it starts with @cf/, it is already a stable slug
     if (shortName.startsWith("@cf/")) {
         return shortName;
     }
 
-    // UUIDs should NOT be used directly as model IDs in env.AI.run if they are from discovery,
-    // as they often refer to specific model instances or task IDs that might expire or be restricted.
-    // However, if the user explicitly provided it, we try to use it.
-    // But we prefer our hardcoded mappings for stability.
+    // Check our stable mappings first
     if (WORKER_AI_MODELS[shortName]) {
         return WORKER_AI_MODELS[shortName];
+    }
+
+    // If it is a UUID, it might be a transient ID from a previous discovery.
+    // We should log this as it might cause 5007 errors.
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(shortName);
+    if (isUUID) {
+        console.warn(`[AI] Warning: Using a UUID as model ID: ${shortName}. This may cause 5007 errors.`);
     }
 
     return shortName;
