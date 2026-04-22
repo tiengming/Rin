@@ -174,7 +174,7 @@ export function AISummarySettings({
               }
             />
             <SettingsCardBody>
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="flex flex-col gap-6">
                 <div className="space-y-2">
                   <p className="text-sm font-medium t-primary">{t("settings.ai_summary.model.title")}</p>
                   <div className="flex gap-2">
