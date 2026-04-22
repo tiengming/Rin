@@ -177,8 +177,8 @@ export function AISummarySettings({
               <div className="flex flex-col gap-6">
                 <div className="space-y-2">
                   <p className="text-sm font-medium t-primary">{t("settings.ai_summary.model.title")}</p>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full">
+                    <div className="flex-1 min-w-0">
                       <SearchableSelect
                         value={value.model}
                         onChange={(nextValue) => {
