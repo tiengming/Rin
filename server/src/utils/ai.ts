@@ -161,20 +161,37 @@ async function executeWorkerAIImage(
         throw new Error("Workers AI binding is not configured");
     }
 
-    const response = await env.AI.run(modelId as any, {
-        prompt
-    } as any);
+    let response: any;
+
+    // Check if the model is one of the newer ones that might prefer/require multipart or specific formatting
+    const isNewModel = modelId.includes("wan") || modelId.includes("flux-2");
+
+    if (isNewModel) {
+        // Use multipart form data for newer models as recommended in recent docs
+        const form = new FormData();
+        form.append("prompt", prompt);
+        form.append("width", "1024");
+        form.append("height", "1024");
+
+        response = await env.AI.run(modelId as any, {
+            multipart: {
+                body: form as any,
+                contentType: "multipart/form-data"
+            }
+        } as any);
+    } else {
+        // Standard prompt format
+        response = await env.AI.run(modelId as any, {
+            prompt
+        } as any);
+    }
 
     if (response instanceof Uint8Array || response instanceof ArrayBuffer) {
         return response as ArrayBuffer;
     }
 
-    // Handle JSON response object with base64 encoded image
-    const respObj = response as any;
-
     // Common base64 conversion utility
     const base64ToBuffer = (base64: string) => {
-        // Use globalThis.atob or Buffer for cross-environment compatibility
         const binaryString = typeof atob === "function"
             ? atob(base64)
             : Buffer.from(base64, "base64").toString("binary");
@@ -186,19 +203,25 @@ async function executeWorkerAIImage(
         return bytes.buffer;
     };
 
-    // Check various common result fields in Workers AI response
-    const base64Image = respObj.image || respObj.result?.image || respObj.dataURI?.split(",")[1];
+    const respObj = response as any;
 
-    if (typeof base64Image === "string") {
-        return base64ToBuffer(base64Image);
+    // 1. Check for top-level image field (most models)
+    if (typeof respObj.image === "string") return base64ToBuffer(respObj.image);
+
+    // 2. Check for result object (newer Workers AI wrapper)
+    if (respObj.result) {
+        if (typeof respObj.result.image === "string") return base64ToBuffer(respObj.result.image);
+        if (typeof respObj.result === "string") return base64ToBuffer(respObj.result);
     }
 
-    // Check for output array (Flux 2 Dev format)
-    if (Array.isArray(respObj.output) && respObj.output[0]?.bytes) {
-        return base64ToBuffer(respObj.output[0].bytes);
+    // 3. Check for output array (Flux 2 Dev format)
+    if (Array.isArray(respObj.output) && respObj.output[0]) {
+        const out = respObj.output[0];
+        if (typeof out.bytes === "string") return base64ToBuffer(out.bytes);
+        if (typeof out === "string") return base64ToBuffer(out);
     }
 
-    throw new Error(`Invalid response from Image AI model: ${JSON.stringify(response).slice(0, 100)}`);
+    throw new Error(`Invalid image response from model ${modelId}: ${JSON.stringify(response).slice(0, 100)}`);
 }
 
 /**

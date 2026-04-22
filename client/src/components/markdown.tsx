@@ -125,7 +125,7 @@ export function Markdown({ content }: { content: string }) {
 
   const Content = useMemo(() => (
     <ReactMarkdown
-      className="toc-content prose prose-neutral dark:prose-invert max-w-none t-primary text-[16px] leading-[1.8] tracking-normal selection:bg-theme/20 selection:text-theme"
+      className="toc-content prose prose-neutral dark:prose-invert max-w-none t-primary text-[16px] leading-[1.8] tracking-normal selection:bg-theme/20 selection:text-theme px-1"
       remarkPlugins={[gfm, remarkMermaid, remarkMath, remarkAlert]}
       children={content}
       rehypePlugins={[rehypeKatex, rehypeRaw]}
@@ -376,7 +376,7 @@ export function Markdown({ content }: { content: string }) {
         hr({ children, ...props }) {
           return <hr className="my-4" {...props} />;
         },
-        table: ({ node, ...props }) => <table className="table" {...props} />,
+        table: ({ node, ...props }) => <div className="overflow-x-auto my-8 rounded-xl border border-black/5 dark:border-white/10"><table className="min-w-full divide-y divide-black/5 dark:divide-white/10" {...props} /></div>,
         th: ({ node, ...props }) => (
           <th className="px-4 py-2 border bg-gray-600" {...props} />
         ),

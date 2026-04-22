@@ -44,7 +44,7 @@ export function AISummarySettings({
   const [testResult, setTestResult] = useState<{ success?: boolean; response?: string; error?: string; details?: string } | null>(null);
   const { showAlert, AlertUI } = useAlert();
   const providerFields = getAIProviderFields(value.provider);
-  const [workersModels, setWorkersModels] = useState<{ text: string[], image: string[], audio: string[] } | null>(null);
+  const [workersModels, setWorkersModels] = useState<{ text: {id: string, name: string}[], image: {id: string, name: string}[], audio: {id: string, name: string}[] } | null>(null);
   const [fetchingModels, setFetchingModels] = useState(false);
 
   useEffect(() => {
@@ -70,9 +70,9 @@ export function AISummarySettings({
       const { data } = await client.config.aiModels();
       if (data) {
         setWorkersModels({
-          text: data.text || [],
-          image: data.image || [],
-          audio: data.audio || []
+          text: (data.text || []).map((m: any) => typeof m === "string" ? { id: m, name: m } : m),
+          image: (data.image || []).map((m: any) => typeof m === "string" ? { id: m, name: m } : m),
+          audio: (data.audio || []).map((m: any) => typeof m === "string" ? { id: m, name: m } : m)
         });
         if (silent !== true) {
           showAlert(t("settings.ai_summary.models_loaded"));
@@ -130,9 +130,9 @@ export function AISummarySettings({
 
   const modelOptions = useMemo(() => {
     if (value.provider === "worker-ai" && workersModels?.text) {
-      return workersModels.text;
+      return workersModels.text.map(m => ({ label: m.name, value: m.id }));
     }
-    return AI_MODEL_PRESETS[value.provider] || [];
+    return (AI_MODEL_PRESETS[value.provider] || []).map(m => ({ label: m, value: m }));
   }, [value.provider, workersModels]);
 
   return (
@@ -184,10 +184,7 @@ export function AISummarySettings({
                         onChange={(nextValue) => {
                           onChange({ model: nextValue });
                         }}
-                        options={modelOptions.map((option) => ({
-                          label: option,
-                          value: option,
-                        }))}
+                        options={modelOptions}
                         placeholder={t("settings.ai_summary.model.desc")}
                         searchPlaceholder={t("settings.ai_summary.model.desc")}
                         emptyLabel={t("no_more")}
@@ -255,7 +252,7 @@ export function AISummarySettings({
                         onChange({ imageModel: nextValue });
                       }}
                       options={workersModels?.image
-                        ? workersModels.image.map(m => ({ label: m, value: m }))
+                        ? workersModels.image.map(m => ({ label: m.name, value: m.id }))
                         : [
                           { label: "FLUX.1-schnell", value: "@cf/black-forest-labs/flux-1-schnell" },
                           { label: "Stable Diffusion XL", value: "@cf/stabilityai/stable-diffusion-xl-base-1.0" },
