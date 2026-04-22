@@ -66,12 +66,20 @@ export const AI_REFORMAT_SYSTEM_PROMPT =
 export function getWorkerAIModelId(shortName: string): string {
     if (!shortName) return "";
 
-    // If it already looks like a full ID (starts with @cf/ or is a UUID), return it
-    if (shortName.startsWith("@cf/") || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(shortName)) {
+    // If it starts with @cf/, it is likely a correct model ID
+    if (shortName.startsWith("@cf/")) {
         return shortName;
     }
 
-    return WORKER_AI_MODELS[shortName] || shortName;
+    // UUIDs should NOT be used directly as model IDs in env.AI.run if they are from discovery,
+    // as they often refer to specific model instances or task IDs that might expire or be restricted.
+    // However, if the user explicitly provided it, we try to use it.
+    // But we prefer our hardcoded mappings for stability.
+    if (WORKER_AI_MODELS[shortName]) {
+        return WORKER_AI_MODELS[shortName];
+    }
+
+    return shortName;
 }
 
 export function normalizeExternalAIBaseUrl(apiUrl: string): string {
@@ -466,31 +474,31 @@ function processAIError(
     model: string, 
     provider: string
 ): { success: false; error: string; details?: string } {
-    const originalMessage = error.message || 'Unknown error';
-    console.error('[AI] Error:', error);
+    const originalMessage = error.message || "Unknown error";
+    console.error("[AI] Error:", error);
 
     let errorMessage = originalMessage;
-    let errorDetails = '';
+    let errorDetails = "";
 
-    if (originalMessage.includes('fetch failed') || originalMessage.includes('NetworkError')) {
-        errorMessage = 'Network error: Unable to connect to AI service';
-        errorDetails = 'Please check your API URL and network connection.';
-    } else if (originalMessage.includes('Workers AI binding is not configured')) {
-        errorMessage = 'Workers AI is not configured';
-        errorDetails = 'Add the Cloudflare Workers AI binding before testing the worker-ai provider.';
-    } else if (originalMessage.includes('401') || originalMessage.includes('Unauthorized')) {
-        errorMessage = 'Authentication failed: Invalid API key';
-        errorDetails = 'Please check your API key is correct and not expired.';
-    } else if (originalMessage.includes('429')) {
-        errorMessage = 'Rate limit exceeded';
-        errorDetails = 'Too many requests. Please wait a moment.';
-    } else if (originalMessage.includes('404')) {
-        errorMessage = 'Model not found';
-        errorDetails = `Model "${model}" not found for provider "${provider}".`;
-    } else if (originalMessage.includes('500') || originalMessage.includes('503')) {
-        errorMessage = 'AI service temporarily unavailable';
-        errorDetails = 'Service is experiencing issues. Please try again later.';
-    } else if (originalMessage.includes('Invalid')) {
+    if (originalMessage.includes("fetch failed") || originalMessage.includes("NetworkError")) {
+        errorMessage = "Network error: Unable to connect to AI service";
+        errorDetails = "Please check your API URL and network connection.";
+    } else if (originalMessage.includes("Workers AI binding is not configured")) {
+        errorMessage = "Workers AI is not configured";
+        errorDetails = "Add the Cloudflare Workers AI binding before testing the worker-ai provider.";
+    } else if (originalMessage.includes("401") || originalMessage.includes("Unauthorized")) {
+        errorMessage = "Authentication failed: Invalid API key";
+        errorDetails = "Please check your API key is correct and not expired.";
+    } else if (originalMessage.includes("429")) {
+        errorMessage = "Rate limit exceeded";
+        errorDetails = "Too many requests. Please wait a moment.";
+    } else if (originalMessage.includes("404") || originalMessage.includes("5007")) {
+        errorMessage = "Model not found or unavailable (5007)";
+        errorDetails = `Model "${model}" could not be found or is not available in your region. Try another model.`;
+    } else if (originalMessage.includes("500") || originalMessage.includes("503") || originalMessage.includes("temporarily unavailable")) {
+        errorMessage = "AI service temporarily unavailable";
+        errorDetails = "Cloudflare Workers AI may be experiencing a temporary outage or rate limit. Please try again in a few minutes or switch models.";
+    } else if (originalMessage.includes("Invalid")) {
         errorMessage = `AI model error: ${originalMessage}`;
         errorDetails = `Model "${model}" may not be supported. Please verify the model ID.`;
     }
