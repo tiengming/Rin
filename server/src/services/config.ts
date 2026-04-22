@@ -89,35 +89,45 @@ export function ConfigService(): Hono {
             if (env.AI && typeof env.AI.models === "function") {
                 const allModels = await env.AI.models();
 
-                const textTaskIds = ["text-generation", "summarization"];
+                // Broad categories for mapping
                 const textModels = allModels
-                    .filter(m => textTaskIds.includes(m.task.id))
+                    .filter(m =>
+                        m.task?.id === "text-generation" ||
+                        m.task?.name?.toLowerCase().includes("text generation") ||
+                        m.task?.id === "summarization"
+                    )
                     .sort((a, b) => {
                         const aId = a.id.toLowerCase();
                         const bId = b.id.toLowerCase();
-
-                        // Prioritize Reasoning models (DeepSeek, Llama 3.3)
                         const aReasoning = aId.includes("deepseek") || aId.includes("llama-3.3");
                         const bReasoning = bId.includes("deepseek") || bId.includes("llama-3.3");
-
                         if (aReasoning && !bReasoning) return -1;
                         if (!aReasoning && bReasoning) return 1;
-
-                        // Then Popular models
-                        const aPop = a.properties?.find((p: any) => p.property_id === "popular")?.value === "true";
-                        const bPop = b.properties?.find((p: any) => p.property_id === "popular")?.value === "true";
-                        if (aPop && !bPop) return -1;
-                        if (!aPop && bPop) return 1;
-
                         return 0;
                     })
                     .map(m => m.id);
 
+                const imageModels = allModels
+                    .filter(m =>
+                        m.task?.id === "text-to-image" ||
+                        m.task?.name?.toLowerCase().includes("image")
+                    )
+                    .map(m => m.id);
+
+                const audioModels = allModels
+                    .filter(m =>
+                        m.task?.id === "speech-to-text" ||
+                        m.task?.name?.toLowerCase().includes("speech") ||
+                        m.task?.id === "text-to-speech"
+                    )
+                    .map(m => m.id);
+
                 return c.json({
-                    text: textModels,
-                    image: allModels.filter(m => m.task.id === "text-to-image").map(m => m.id),
-                    audio: allModels.filter(m => m.task.id === "speech-to-text").map(m => m.id),
-                    raw: true
+                    text: textModels.length > 0 ? textModels : AI_TEXT_MODELS.map(m => WORKER_AI_MODELS[m] || m),
+                    image: imageModels.length > 0 ? imageModels : AI_IMAGE_MODELS.map(m => WORKER_AI_MODELS[m] || m),
+                    audio: audioModels.length > 0 ? audioModels : AI_AUDIO_MODELS.map(m => WORKER_AI_MODELS[m] || m),
+                    raw: true,
+                    count: allModels.length
                 });
             }
         } catch (e) {

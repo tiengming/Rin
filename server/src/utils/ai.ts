@@ -172,27 +172,30 @@ async function executeWorkerAIImage(
     // Handle JSON response object with base64 encoded image
     const respObj = response as any;
 
+    // Common base64 conversion utility
+    const base64ToBuffer = (base64: string) => {
+        // Use globalThis.atob or Buffer for cross-environment compatibility
+        const binaryString = typeof atob === "function"
+            ? atob(base64)
+            : Buffer.from(base64, "base64").toString("binary");
+
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes.buffer;
+    };
+
     // Check various common result fields in Workers AI response
     const base64Image = respObj.image || respObj.result?.image || respObj.dataURI?.split(",")[1];
 
     if (typeof base64Image === "string") {
-        const binaryString = atob(base64Image);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-        }
-        return bytes.buffer;
+        return base64ToBuffer(base64Image);
     }
 
     // Check for output array (Flux 2 Dev format)
     if (Array.isArray(respObj.output) && respObj.output[0]?.bytes) {
-        const base64Bytes = respObj.output[0].bytes;
-        const binaryString = atob(base64Bytes);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-        }
-        return bytes.buffer;
+        return base64ToBuffer(respObj.output[0].bytes);
     }
 
     throw new Error(`Invalid response from Image AI model: ${JSON.stringify(response).slice(0, 100)}`);

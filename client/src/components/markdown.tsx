@@ -125,7 +125,7 @@ export function Markdown({ content }: { content: string }) {
 
   const Content = useMemo(() => (
     <ReactMarkdown
-      className="toc-content prose prose-neutral dark:prose-invert max-w-none t-primary text-[16px] leading-[1.8] tracking-normal"
+      className="toc-content prose prose-neutral dark:prose-invert max-w-none t-primary text-[16px] leading-[1.8] tracking-normal selection:bg-theme/20 selection:text-theme"
       remarkPlugins={[gfm, remarkMermaid, remarkMath, remarkAlert]}
       children={content}
       rehypePlugins={[rehypeKatex, rehypeRaw]}
@@ -263,7 +263,7 @@ export function Markdown({ content }: { content: string }) {
         ul({ children, className, ...props }) {
           const listClass = className?.includes("contains-task-list")
             ? "list-none pl-5"
-            : "list-disc pl-5 mt-2";
+            : "list-disc pl-6 my-4 marker:text-theme/50";
           return (
             <ul className={listClass} {...props}>
               {children}
@@ -272,7 +272,7 @@ export function Markdown({ content }: { content: string }) {
         },
         ol({ children, ...props }) {
           return (
-            <ol className="list-decimal pl-5" {...props}>
+            <ol className="list-decimal pl-6 my-4 marker:text-theme/50 marker:font-medium" {...props}>
               {children}
             </ol>
           );

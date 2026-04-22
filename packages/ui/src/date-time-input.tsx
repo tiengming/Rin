@@ -143,9 +143,13 @@ export function DateTimeInput({
           value={inputValue}
           onChange={(e) => {
             setInputValue(e.target.value);
-            const parsed = new Date(e.target.value);
-            if (!isNaN(parsed.getTime())) {
-              onChange(parsed);
+            const val = e.target.value;
+            // Basic YYYY-MM-DD HH:mm or YYYY-MM-DD support
+            if (val.length >= 10) {
+              const parsed = new Date(val);
+              if (!isNaN(parsed.getTime())) {
+                onChange(parsed);
+              }
             }
           }}
           onFocus={() => {
