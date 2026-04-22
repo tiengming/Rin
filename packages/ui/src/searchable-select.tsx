@@ -68,7 +68,7 @@ export function SearchableSelect({
   const buttonLabel = selectedOption?.label ?? value ?? placeholder ?? "";
 
   return (
-    <div ref={rootRef} className="relative w-full sm:min-w-[20rem] md:min-w-[24rem] lg:min-w-[28rem]">
+    <div ref={rootRef} className="relative w-full max-w-full sm:min-w-[18rem] md:min-w-[22rem] lg:min-w-[26rem]">
       <button
         type="button"
         className="flex w-full items-center justify-between gap-3 rounded-xl border border-black/10 bg-w px-4 py-3 text-left text-sm t-primary transition-colors hover:border-black/20 focus:outline-none focus:ring-2 focus:ring-theme/20 dark:border-white/10 dark:hover:border-white/20"
@@ -80,7 +80,7 @@ export function SearchableSelect({
           }
         }}
       >
-        <span className={`min-w-0 truncate ${buttonLabel ? "t-primary" : "text-neutral-400 dark:text-neutral-500"}`}>
+        <span className={`min-w-0 truncate block flex-1 ${buttonLabel ? "t-primary" : "text-neutral-400 dark:text-neutral-500"}`}>
           {buttonLabel || placeholder}
         </span>
         <i className={`ri-arrow-down-s-line text-lg text-neutral-500 transition-transform dark:text-neutral-400 ${isOpen ? "rotate-180" : ""}`} />
