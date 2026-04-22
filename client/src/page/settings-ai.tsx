@@ -130,11 +130,7 @@ export function AISummarySettings({
 
   const modelOptions = useMemo(() => {
     if (value.provider === "worker-ai" && workersModels?.text) {
-      return workersModels.text.map(m => {
-        // Clean label: remove "@cf/" and other prefixes if they exist in name
-        const label = m.name.startsWith("@cf/") ? m.name.split("/").pop() || m.name : m.name;
-        return { label, value: m.id };
-      });
+      return workersModels.text.map(m => ({ label: m.name, value: m.id }));
     }
     return (AI_MODEL_PRESETS[value.provider] || []).map(m => ({ label: m, value: m }));
   }, [value.provider, workersModels]);
