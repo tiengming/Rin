@@ -66,21 +66,21 @@ export const AI_REFORMAT_SYSTEM_PROMPT =
 export function getWorkerAIModelId(shortName: string): string {
     if (!shortName) return "";
 
-    // If it starts with @cf/, it is already a stable slug
-    if (shortName.startsWith("@cf/")) {
-        return shortName;
-    }
-
     // Check our stable mappings first
     if (WORKER_AI_MODELS[shortName]) {
         return WORKER_AI_MODELS[shortName];
     }
 
-    // If it is a UUID, it might be a transient ID from a previous discovery.
-    // We should log this as it might cause 5007 errors.
+    // If it starts with @cf/, it is a stable slug
+    if (shortName.startsWith("@cf/")) {
+        return shortName;
+    }
+
+    // If it is a UUID, it is almost certainly a transient ID and will fail with 5007.
+    // We should try to find a fallback if possible, but for now we just log it.
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(shortName);
     if (isUUID) {
-        console.warn(`[AI] Warning: Using a UUID as model ID: ${shortName}. This may cause 5007 errors.`);
+        console.warn(`[AI] Error: Using a UUID as model ID: ${shortName}. This will likely cause a 5007 error.`);
     }
 
     return shortName;
