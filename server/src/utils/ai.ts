@@ -80,7 +80,7 @@ export function getWorkerAIModelId(shortName: string): string {
     // We should try to find a fallback if possible, but for now we just log it.
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(shortName);
     if (isUUID) {
-        console.warn(`[AI] Error: Using a UUID as model ID: ${shortName}. This will likely cause a 5007 error.`);
+        throw new Error(`Model "${shortName}" is a transient UUID and cannot be used. Please use a stable model slug (e.g., starting with @cf/).`);
     }
 
     return shortName;
