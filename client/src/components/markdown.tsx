@@ -60,7 +60,7 @@ function MarkdownImage({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const metadata = useMemo(() => parseImageUrlMetadata(src || ""), [src]);
-  const { loaded: isLoaded, onLoad: handleLoad } = useImageLoadState(src);
+  const { loaded: isLoaded, onLoad: handleLoad, onError, imageRef } = useImageLoadState(src);
 
   useEffect(() => {
     if (metadata.blurhash && canvasRef.current) {
@@ -92,7 +92,7 @@ function MarkdownImage({
       <img
         src={src}
         alt={alt}
-        loading="lazy"
+        ref={imageRef} loading="lazy" onError={onError}
         onLoad={handleLoad}
         onClick={() => src && show(src)}
         className={`toc-content cursor-zoom-in w-full h-auto transition-all duration-500 hover:brightness-90 active:scale-[0.98] ${
@@ -128,9 +128,11 @@ function LightboxComponent({ index, slides, close }: { index: number; slides: Sl
       slides={slides}
       open={true}
       close={close}
-      captions={{ descriptionTextAlign: "center" }}
-      thumbnails={{ position: "bottom", width: 120, height: 80, border: 0, gap: 10 }}
-      animation={{ fade: 300, swipe: 500 }}
+      captions={{ descriptionTextAlign: "center", descriptionMaxLines: 3 }}
+      thumbnails={{ position: "bottom", width: 100, height: 60, border: 0, gap: 16 }}
+      animation={{ fade: 250, swipe: 500, zoom: 300 }}
+      controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
+      styles={{ container: { backgroundColor: "transparent" } }}
     />
   );
 }

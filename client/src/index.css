@@ -267,11 +267,44 @@ a.toc-link {
 }
 
 .yarl__thumbnails_thumbnail_active {
-  border-color: var(--theme-rgb) !important;
+  border-color: rgb(var(--theme-rgb)) !important;
   transform: scale(1.05);
 }
 
 .yarl__slide_image {
   border-radius: 12px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+/* Refined Lightbox Apple OS Style */
+.yarl__fullsize_button {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 50% !important;
+  margin: 10px !important;
+}
+
+.dark .yarl__fullsize_button {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.yarl__thumbnails_thumbnail {
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.yarl__thumbnails_thumbnail_active {
+  border: 3px solid rgb(var(--theme-rgb)) !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 8px 24px rgba(var(--theme-rgb), 0.3);
+}
+
+.yarl__slide_image {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .yarl__slide_image {
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
