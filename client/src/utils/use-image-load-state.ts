@@ -6,20 +6,20 @@ export function useImageLoadState(src?: string) {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    const image = imageRef.current;
+    if (src && image && image.complete) {
+      if (image.naturalWidth > 0) {
+        setLoaded(true);
+        setFailed(false);
+      } else {
+        setLoaded(false);
+        setFailed(true);
+      }
+      return;
+    }
+
     setLoaded(false);
     setFailed(false);
-
-    const image = imageRef.current;
-    if (!src || !image || !image.complete) {
-      return;
-    }
-
-    if (image.naturalWidth > 0) {
-      setLoaded(true);
-      return;
-    }
-
-    setFailed(true);
   }, [src]);
 
   return {
