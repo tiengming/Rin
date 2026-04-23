@@ -24,8 +24,10 @@ https://xeu.life
 - **Authentication & Management**: Support for GitHub OAuth and traditional username/password login. The first registered user becomes an administrator.
 - **Moments**: Share short thoughts and life updates in a dedicated social-media-style stream.
 - **Full-text Search**: Quickly find articles using the built-in search functionality.
-- **Content Creation**: Write and edit articles with a rich editor featuring Monaco improvements and WordPress import support.
-- **Enhanced Rendering**: Support for Mermaid diagrams, KaTeX math formulas, callouts, alerts, and an image lightbox for a better reading experience.
+- **Content Creation**: Write and edit articles with a rich editor featuring Monaco improvements, manual date input, and WordPress import support.
+- **Enhanced Rendering**: Support for Mermaid diagrams, KaTeX math formulas, callouts, alerts, embedded HTML fragments, and an image lightbox.
+- **Summary Optimization**: Smart article summaries in listings that filter out raw image code for a cleaner look.
+- **Featured Images**: Automatically detect the first image in the article body and use it as the cover image in listings.
 - **Real-time Autosave**: Local drafts are saved automatically in real-time, with isolation between different articles.
 - **Privacy Control**: Mark articles as "Visible only to me" for private drafts or personal notes, synchronized across devices.
 - **Image Management**: Upload images to S3-compatible storage (e.g., Cloudflare R2) via drag-and-drop or paste, with automatic link generation.
@@ -35,6 +37,7 @@ https://xeu.life
 - **Comment System**: Full-featured comment system with replies, moderation, and Webhook notifications.
 - **Visitor Statistics**: Track article performance with PV/UV statistics powered by HyperLogLog.
 - **Rin CLI**: A unified command-line tool for development, database migrations, and one-click deployment.
+- **Favicon Customization**: Support for uploading custom Favicons (Fixed 500 errors in previous versions).
 - **Type Safety**: End-to-end type safety using shared TypeScript types via the `@rin/api` package.
 - ...and more! Explore all features at https://xeu.life.
 
