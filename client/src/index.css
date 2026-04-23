@@ -211,100 +211,99 @@ a.toc-link {
   @apply bg-theme;
 }
 
-/* Lightbox Apple OS Style */
+/* Apple-style Lightbox Optimization */
 .yarl__backdrop {
   background-color: rgba(255, 255, 255, 0.4) !important;
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(25px) brightness(80%) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) brightness(80%) saturate(180%);
+  transition: backdrop-filter 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .dark .yarl__backdrop {
-  background-color: rgba(0, 0, 0, 0.5) !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(25px) brightness(30%) saturate(150%);
+  -webkit-backdrop-filter: blur(25px) brightness(30%) saturate(150%);
 }
 
 .yarl__container {
   --yarl__thumbnails_container_background_color: transparent;
   --yarl__thumbnails_thumbnail_background: rgba(255, 255, 255, 0.1);
-  --yarl__thumbnails_thumbnail_active_border_color: #fff;
-  --yarl__button_filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.3));
+  --yarl__thumbnails_thumbnail_active_border_color: rgb(var(--theme-rgb));
+  --yarl__button_filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.3));
 }
 
-.yarl__button {
-  opacity: 0.7;
-  transition: all 0.2s ease;
+/* Natural Controls: Hidden by default, fade in on interaction */
+.yarl__button,
+.yarl__counter {
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.2s ease;
+}
+
+.yarl__container:hover .yarl__button,
+.yarl__container:hover .yarl__counter {
+  opacity: 0.8;
 }
 
 .yarl__button:hover {
-  opacity: 1;
-  background-color: rgba(0, 0, 0, 0.05) !important;
-  transform: scale(1.05);
+  opacity: 1 !important;
+  transform: scale(1.1);
 }
 
-.dark .yarl__button:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-.yarl__caption_container {
-  background: none !important;
-  padding: 24px !important;
-}
-
-.yarl__caption_title {
-  font-weight: 600 !important;
-  font-size: 1.1rem !important;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-}
-
-.yarl__caption_description {
-  opacity: 0.8 !important;
-  font-size: 0.9rem !important;
-}
-
-.yarl__thumbnails_thumbnail {
-  border-radius: 6px;
-  border: 2px solid transparent !important;
-  transition: all 0.2s ease;
-}
-
-.yarl__thumbnails_thumbnail_active {
-  border-color: rgb(var(--theme-rgb)) !important;
-  transform: scale(1.05);
-}
-
+/* Continuous Corners and Physics */
 .yarl__slide_image {
-  border-radius: 12px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-}
-
-/* Refined Lightbox Apple OS Style */
-.yarl__fullsize_button {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 50% !important;
-  margin: 10px !important;
-}
-
-.dark .yarl__fullsize_button {
-  background-color: rgba(0, 0, 0, 0.2) !important;
-}
-
-.yarl__thumbnails_thumbnail {
-  border-radius: 12px !important;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.yarl__thumbnails_thumbnail_active {
-  border: 3px solid rgb(var(--theme-rgb)) !important;
-  transform: scale(1.1) !important;
-  box-shadow: 0 8px 24px rgba(var(--theme-rgb), 0.3);
-}
-
-.yarl__slide_image {
+  border-radius: 18px !important;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .dark .yarl__slide_image {
   border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+}
+
+.yarl__caption_container {
+  background: none !important;
+  padding: 32px !important;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.yarl__container:hover .yarl__caption_container {
+  opacity: 1;
+}
+
+.yarl__caption_title {
+  font-weight: 600 !important;
+  font-size: 1.2rem !important;
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.yarl__caption_description {
+  opacity: 0.7 !important;
+  font-size: 0.95rem !important;
+  margin-top: 4px !important;
+}
+
+/* Thumbnails Refinement */
+.yarl__thumbnails_thumbnail {
+  border-radius: 12px !important;
+  overflow: hidden;
+  border: 2px solid transparent !important;
+  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+.yarl__thumbnails_thumbnail_active {
+  border-color: rgb(var(--theme-rgb)) !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 8px 24px rgba(var(--theme-rgb), 0.4);
+}
+
+.yarl__fullsize_button {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 50% !important;
+  margin: 16px !important;
 }
