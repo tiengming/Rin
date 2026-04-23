@@ -130,7 +130,12 @@ function LightboxComponent({ index, slides, close }: { index: number; slides: Sl
       close={close}
       captions={{ descriptionTextAlign: "center", descriptionMaxLines: 3 }}
       thumbnails={{ position: "bottom", width: 100, height: 60, border: 0, gap: 16 }}
-      animation={{ fade: 300, swipe: 400, zoom: 400 }}
+      animation={{ fade: 400, swipe: 600 }}
+      render={{
+        buttonPrev: () => null,
+        buttonNext: () => null,
+        slideFooter: () => null,
+      }}
       zoom={{ maxZoomPixelRatio: 3, doubleTapDelay: 300 }}
       controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
       styles={{ container: { backgroundColor: "transparent" } }}
@@ -180,7 +185,7 @@ export function Markdown({ content }: { content: string }) {
       const imgName = img.src.split("/").pop()?.split("?")[0] || "Image";
       return {
         src: img.src,
-        title: img.alt || imgName,
+        title: img.alt || decodeURIComponent(imgName).replace(/\.[^/.]+$/, ""),
         description: img.alt ? imgName : undefined,
       };
     });

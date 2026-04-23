@@ -225,7 +225,14 @@ a.toc-link {
   -webkit-backdrop-filter: blur(25px) brightness(30%) saturate(150%);
 }
 
+.yarl__root {
+  --yarl__thumbnails_container_background_color: transparent;
+  --yarl__color_backdrop: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+
 .yarl__container {
+  background-color: transparent !important;
   --yarl__thumbnails_container_background_color: transparent;
   --yarl__thumbnails_thumbnail_background: rgba(255, 255, 255, 0.1);
   --yarl__thumbnails_thumbnail_active_border_color: rgb(var(--theme-rgb));
@@ -251,9 +258,8 @@ a.toc-link {
 
 /* Continuous Corners and Physics */
 .yarl__slide_image {
-  border-radius: 18px !important;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  @apply rounded-2xl shadow-2xl;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
   transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
