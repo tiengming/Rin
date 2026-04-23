@@ -289,7 +289,9 @@ export function Markdown({ content }: { content: string }) {
         th: (props) => <th {...props} className="px-6 py-4 bg-neutral-50 dark:bg-neutral-900/50 text-left text-xs font-bold text-neutral-500 uppercase tracking-wider" />,
         td: (props) => <td {...props} className="px-6 py-4 whitespace-nowrap text-sm border-t border-black/5 dark:border-white/5" />,
       }}
-    />
+    >
+      {content}
+    </ReactMarkdown>
   ), [content, show, colorMode, headingStyle]);
 
   return (
