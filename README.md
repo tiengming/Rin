@@ -21,19 +21,21 @@ https://xeu.life
 
 ## Features
 
-- **Authentication & Management**: GitHub OAuth login. The first registered user becomes an administrator, while subsequent users join as regular members.
-- **Content Creation**: Write and edit articles with a rich, intuitive editor.
+- **Authentication & Management**: Support for GitHub OAuth and traditional username/password login. The first registered user becomes an administrator.
+- **Moments**: Share short thoughts and life updates in a dedicated social-media-style stream.
+- **Full-text Search**: Quickly find articles using the built-in search functionality.
+- **Content Creation**: Write and edit articles with a rich editor featuring Monaco improvements and WordPress import support.
+- **Enhanced Rendering**: Support for Mermaid diagrams, KaTeX math formulas, callouts, alerts, and an image lightbox for a better reading experience.
 - **Real-time Autosave**: Local drafts are saved automatically in real-time, with isolation between different articles.
 - **Privacy Control**: Mark articles as "Visible only to me" for private drafts or personal notes, synchronized across devices.
-- **Image Management**: Drag-and-drop or paste images to upload directly to S3-compatible storage (e.g., Cloudflare R2), with automatic link generation.
-- **Custom Slugs**: Assign friendly URLs like `https://yourblog.com/about` using custom article aliases.
-- **Unlisted Posts**: Option to keep articles out of the public homepage listing.
-- **Blogroll**: Add links to friends' blogs. The backend automatically checks link availability every 20 minutes.
-- **Comment System**: Reply to comments or moderate them with delete functionality.
-- **Webhook Notifications**: Receive real-time alerts for new comments via configurable webhooks.
-- **Featured Images**: Automatically detect the first image in an article and use it as the cover image in listings.
-- **Tag Parsing**: Input tags like `#Blog #Cloudflare` and have them automatically parsed and displayed.
-- **Type Safety**: End-to-end type safety with shared TypeScript types between client and server via `@rin/api` package.
+- **Image Management**: Upload images to S3-compatible storage (e.g., Cloudflare R2) via drag-and-drop or paste, with automatic link generation.
+- **Custom Slugs & Unlisted Posts**: Assign friendly URLs (e.g., `/about`) and optionally hide posts from the public homepage listing.
+- **Pinned & Adjacent Articles**: Pin important posts to the top and navigate easily between adjacent articles.
+- **Blogroll**: Manage friend links with automatic health checks every 20 minutes.
+- **Comment System**: Full-featured comment system with replies, moderation, and Webhook notifications.
+- **Visitor Statistics**: Track article performance with PV/UV statistics powered by HyperLogLog.
+- **Rin CLI**: A unified command-line tool for development, database migrations, and one-click deployment.
+- **Type Safety**: End-to-end type safety using shared TypeScript types via the `@rin/api` package.
 - ...and more! Explore all features at https://xeu.life.
 
 ## Documentation
@@ -137,7 +139,7 @@ Rin leverages Workers AI to provide a suite of intelligent features for content 
 - **AI Tags**: Extract relevant hashtags from your content automatically.
 - **AI Featured Image**: Generate a unique cover image for your article using Stable Diffusion or DreamShaper models based on your title.
 - **AI Reformatting**: One-click optimization of Markdown formatting, spelling correction, and typography (especially for mixed Chinese/English content).
-- **Model Selection**: Choose between various free Workers AI models (Llama, Mistral, Gemma, etc.) in the dashboard settings.
+- **Model Selection**: Choose between various free Workers AI models (Llama, Mistral, Gemma, etc.) and customize model settings in the dashboard.
 
 > **Note on SEO**: Rin automatically generates SEO-friendly metadata (Open Graph, Twitter Cards) based on your site name, description, and avatar. It also includes the AI-generated summary in meta tags to improve search engine visibility.
 
