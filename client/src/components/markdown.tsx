@@ -1,5 +1,5 @@
 import "katex/dist/katex.min.css";
-import React, { cloneElement, isValidElement, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useCallback, Suspense, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
@@ -12,13 +12,7 @@ import gfm from "remark-gfm";
 import remarkMermaid from "../remark/remarkMermaid";
 import { remarkAlert } from "remark-github-blockquote-alert";
 import remarkMath from "remark-math";
-import Lightbox, { SlideImage } from "yet-another-react-lightbox";
-import Counter from "yet-another-react-lightbox/plugins/counter";
-import Download from "yet-another-react-lightbox/plugins/download";
-import Zoom from "yet-another-react-lightbox/plugins/zoom";
-import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
-import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
-import Captions from "yet-another-react-lightbox/plugins/captions";
+import type { SlideImage, Plugin } from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import "yet-another-react-lightbox/plugins/captions.css";
@@ -27,6 +21,7 @@ import { useColorMode } from "../utils/darkModeUtils";
 import { parseImageUrlMetadata } from "../utils/image-upload";
 import { useImageLoadState } from "../utils/use-image-load-state";
 
+const Lightbox = React.lazy(() => import("yet-another-react-lightbox"));
 
 const countNewlinesBeforeNode = (text: string, offset: number) => {
   let newlinesBefore = 0;
@@ -42,15 +37,11 @@ const countNewlinesBeforeNode = (text: string, offset: number) => {
 
 const isMarkdownImageLinkAtEnd = (text: string) => {
   const trimmed = text.trim();
-
   const match = trimmed.match(/(.*)(!\[.*?\]\((.*?)\))$/s);
-
   if (match) {
-    const [, beforeImage, _] = match;
-
-    return beforeImage.trim().length === 0 || beforeImage.endsWith("\n");
+    const [, beforeImage] = match;
+    return beforeImage.trim() === "" || beforeImage.endsWith("\n");
   }
-
   return false;
 };
 
@@ -60,124 +51,159 @@ function MarkdownImage({
   show,
   rounded,
   scale,
-  className,
 }: {
   src?: string;
   alt?: string;
-  show: (src?: string) => void;
+  show: (src: string) => void;
   rounded: boolean;
   scale: string;
-  className?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { src: cleanSrc, blurhash, width, height } = parseImageUrlMetadata(src);
-  const { failed, imageRef, loaded, onError, onLoad } = useImageLoadState(cleanSrc);
-  const roundedClass = rounded ? "rounded-xl" : "";
-  const aspectRatio = width && height ? `${width} / ${height}` : undefined;
+  const metadata = useMemo(() => parseImageUrlMetadata(src || ""), [src]);
+  const { loaded: isLoaded, onLoad: handleLoad } = useImageLoadState(src);
 
   useEffect(() => {
-    if (!blurhash || !canvasRef.current) {
-      return;
+    if (metadata.blurhash && canvasRef.current) {
+      drawBlurhashToCanvas(canvasRef.current, metadata.blurhash);
     }
-    try {
-      drawBlurhashToCanvas(canvasRef.current, blurhash);
-    } catch (error) {
-      console.error("Failed to render blurhash", error);
-    }
-  }, [blurhash]);
+  }, [metadata.blurhash]);
+
+  const aspectRatio = metadata.width && metadata.height
+    ? metadata.width / metadata.height
+    : 16 / 9;
 
   return (
-    <span
-      className={`relative inline-block max-w-full overflow-hidden ${roundedClass}`}
-      style={{ zoom: scale, aspectRatio }}
+    <div
+      className="relative inline-block overflow-hidden transition-all duration-500 ease-in-out bg-neutral-100 dark:bg-neutral-800/50"
+      style={{
+        width: `calc(${scale} * 100%)`,
+        aspectRatio: isLoaded ? "auto" : aspectRatio,
+        borderRadius: rounded ? "16px" : "4px",
+      }}
     >
-      {blurhash && !loaded ? (
+      {!isLoaded && metadata.blurhash && (
         <canvas
           ref={canvasRef}
-          aria-hidden="true"
-          className={`absolute inset-0 h-full w-full scale-110 blur-sm ${roundedClass}`}
+          className="absolute inset-0 w-full h-full scale-110 blur-2xl"
+          width={32}
+          height={32}
         />
-      ) : null}
+      )}
       <img
-        ref={imageRef}
-        src={cleanSrc}
+        src={src}
         alt={alt}
-        width={width}
-        height={height}
-        onClick={() => {
-          show(cleanSrc);
-        }}
-        onLoad={onLoad}
-        onError={onError}
-        className={`mx-auto max-w-full cursor-zoom-in transition-all duration-300 hover:brightness-95 active:scale-[0.98] ${roundedClass} ${className || ""} ${
-          blurhash && (!loaded || failed) ? "opacity-0" : "opacity-100"
+        loading="lazy"
+        onLoad={handleLoad}
+        onClick={() => src && show(src)}
+        className={`toc-content cursor-zoom-in w-full h-auto transition-all duration-500 hover:brightness-90 active:scale-[0.98] ${
+          isLoaded ? "opacity-100" : "opacity-0 scale-105"
         }`}
       />
-    </span>
+    </div>
+  );
+}
+
+function LightboxComponent({ index, slides, close }: { index: number; slides: SlideImage[]; close: () => void }) {
+  const [plugins, setPlugins] = useState<Plugin[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      import("yet-another-react-lightbox/plugins/counter"),
+      import("yet-another-react-lightbox/plugins/download"),
+      import("yet-another-react-lightbox/plugins/zoom"),
+      import("yet-another-react-lightbox/plugins/fullscreen"),
+      import("yet-another-react-lightbox/plugins/thumbnails"),
+      import("yet-another-react-lightbox/plugins/captions"),
+    ]).then((modules) => {
+      setPlugins(modules.map(m => m.default as Plugin));
+    });
+  }, []);
+
+  if (plugins.length === 0) return null;
+
+  return (
+    <Lightbox
+      plugins={plugins}
+      index={index}
+      slides={slides}
+      open={true}
+      close={close}
+      captions={{ descriptionTextAlign: "center" }}
+      thumbnails={{ position: "bottom", width: 120, height: 80, border: 0, gap: 10 }}
+      animation={{ fade: 300, swipe: 500 }}
+    />
+  );
+}
+
+function CodeBlock({ children, language, style, codeStyle }: { children: string; language: string; style: { [key: string]: React.CSSProperties }; codeStyle: React.CSSProperties }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="relative group my-6">
+      <SyntaxHighlighter
+        PreTag="div"
+        className="rounded-2xl !bg-neutral-50 dark:!bg-neutral-900/50 border border-black/5 dark:border-white/5 !p-4"
+        language={language}
+        style={style}
+        wrapLongLines={true}
+        codeTagProps={{ style: codeStyle }}
+      >
+        {children.replace(/\n$/, "")}
+      </SyntaxHighlighter>
+      <button
+        className="absolute top-4 right-4 px-3 py-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-md rounded-xl text-xs font-semibold border border-black/5 dark:border-white/10 opacity-0 group-hover:opacity-100 transition-all hover:scale-105 active:scale-95 shadow-sm"
+        onClick={() => {
+          navigator.clipboard.writeText(children);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }}
+      >
+        {copied ? "Copied!" : "Copy"}
+      </button>
+    </div>
   );
 }
 
 export function Markdown({ content }: { content: string }) {
-  const colorMode = useColorMode();
-  const [index, setIndex] = React.useState(-1);
-  const slides = useRef<(SlideImage & { title?: string; description?: string })[]>();
+  const [index, setIndex] = useState(-1);
+  const slides = useRef<SlideImage[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const colorMode = useColorMode();
+
+  const show = useCallback((src: string) => {
+    if (!containerRef.current) return;
+
+    const images = Array.from(containerRef.current.querySelectorAll("img.toc-content")) as HTMLImageElement[];
+    const newSlides = images.map((img) => {
+      const imgName = img.src.split("/").pop()?.split("?")[0] || "Image";
+      return {
+        src: img.src,
+        title: img.alt || imgName,
+        description: img.alt ? imgName : undefined,
+      };
+    });
+
+    slides.current = newSlides;
+    const foundIndex = images.findIndex((img) => img.src === src);
+    setIndex(foundIndex);
+  }, []);
 
   useEffect(() => {
-    slides.current = undefined;
+    slides.current = [];
   }, [content]);
 
-  const show = useCallback((src: string | undefined) => {
-    let slidesLocal = slides.current;
-    if (!slidesLocal) {
-      const parent = containerRef.current;
-      if (!parent) return;
-      const images = parent.querySelectorAll("img");
-      slidesLocal = Array.from(images)
-        .map((image) => {
-          const url = image.getAttribute("src") || "";
-          const filename = url.split("/").pop() || "";
-          const alt = image.getAttribute("alt") || "";
-          return {
-            src: url,
-            alt: alt,
-            title: alt || filename,
-            description: alt ? filename : undefined,
-            imageFit: "contain" as const,
-            download: {
-              url: url,
-              filename: filename,
-            },
-          };
-        })
-        .filter((slide) => slide.src !== "");
-      slides.current = slidesLocal;
-    }
-    const index = slidesLocal?.findIndex((slide) => slide.src === src) ?? -1;
-    setIndex(index);
-  }, []);
+  const headingStyle = useMemo(() => ({ scrollMarginTop: "var(--header-scroll-offset, 7rem)" }), []);
 
   const Content = useMemo(() => (
     <ReactMarkdown
-      className="toc-content prose prose-neutral dark:prose-invert max-w-none t-primary text-[16px] leading-[1.8] tracking-normal selection:bg-theme/20 selection:text-theme px-1"
-      remarkPlugins={[gfm, remarkMermaid, remarkMath, remarkAlert]}
-      children={content}
+      remarkPlugins={[gfm, remarkMath, remarkMermaid, remarkAlert]}
       rehypePlugins={[rehypeKatex, rehypeRaw]}
       components={{
         img({ node, src, ...props }) {
           const offset = node!.position!.start.offset!;
           const previousContent = content.slice(0, offset);
-          const newlinesBefore = countNewlinesBeforeNode(
-            previousContent,
-            offset
-          );
-          const Image = ({
-            rounded,
-            scale,
-          }: {
-            rounded: boolean;
-            scale: string;
-          }) => (
+          const newlinesBefore = countNewlinesBeforeNode(previousContent, offset);
+
+          const Image = ({ rounded, scale }: { rounded: boolean; scale: string }) => (
             <MarkdownImage
               src={src}
               alt={props.alt}
@@ -187,277 +213,97 @@ export function Markdown({ content }: { content: string }) {
             />
           );
 
-          if (
-            newlinesBefore >= 1 ||
-            isMarkdownImageLinkAtEnd(previousContent + "![alt](" + src + ")")
-          ) {
+          if (newlinesBefore >= 1 || isMarkdownImageLinkAtEnd(previousContent + "![" + (props.alt || "") + "](" + src + ")")) {
             return (
-              <span className="block w-full text-center my-4">
-                <Image scale="0.75" rounded={true} />
+              <span className="block w-full text-center my-6">
+                <Image scale="0.85" rounded={true} />
               </span>
             );
           } else {
             return (
-              <span className="inline-block align-middle mx-1 ">
+              <span className="inline-block align-middle mx-1">
                 <Image scale="0.5" rounded={false} />
               </span>
             );
           }
         },
         code(props) {
-          const [copied, setCopied] = React.useState(false);
           const { children, className, node, ...rest } = props;
           const match = /language-(\w+)/.exec(className || "");
-
           const curContent = content.slice(node?.position?.start.offset || 0);
           const isCodeBlock = curContent.trimStart().startsWith("```");
 
-          const codeBlockStyle = {
-            fontFamily: 'ui-monospace, "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
-            fontSize: "14px",
-            fontVariantLigatures: "normal",
-            WebkitFontFeatureSettings: '"liga" 1',
-            fontFeatureSettings: '"liga" 1',
-          };
-
-          const inlineCodeStyle = {
-            ...codeBlockStyle,
-            fontSize: "13px",
+          const codeStyle = {
+            fontFamily: 'ui-monospace, "SFMono-Regular", "SF Mono", Consolas, monospace',
+            fontSize: isCodeBlock ? "14px" : "13px",
           };
 
           const language = match ? match[1] : "";
 
           if (isCodeBlock) {
             return (
-              <div className="relative group">
-                <SyntaxHighlighter
-                  PreTag="div"
-                  className="rounded"
-                  language={language}
-                  style={
-                    colorMode === "dark"
-                      ? vscDarkPlus
-                      : base16AteliersulphurpoolLight
-                  }
-                  wrapLongLines={true}
-                  codeTagProps={{ style: codeBlockStyle }}
-                >
-                  {String(children).replace(/\n$/, "")}
-                </SyntaxHighlighter>
-                <button className="absolute top-1 right-1 px-2 py-1 bg-w rounded-md text-sm bg-hover select-none invisible group-hover:visible"
-                  onClick={() => {
-                    navigator.clipboard.writeText(String(children));
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                >
-                  {copied ? "Copied!" : "Copy"}
-                </button>
-              </div>
-            );
-          } else {
-            return (
-              <code
-                {...rest}
-                className={`bg-[#eff1f3] dark:bg-[#4a5061] h-[24px] px-[4px] rounded-md mx-[2px] py-[2px] text-neutral-800 dark:text-neutral-300 ${className || ""
-                  }`}
-                style={inlineCodeStyle}
+              <CodeBlock
+                language={language}
+                style={colorMode === "dark" ? vscDarkPlus : base16AteliersulphurpoolLight}
+                codeStyle={codeStyle}
               >
-                {children}
-              </code>
+                {String(children)}
+              </CodeBlock>
             );
           }
+          return (
+            <code
+              {...rest}
+              className={`bg-neutral-100 dark:bg-neutral-800/80 px-1.5 py-0.5 rounded-md text-[0.9em] text-theme font-medium ${className || ""}`}
+              style={codeStyle}
+            >
+              {children}
+            </code>
+          );
         },
         blockquote({ children, ...props }) {
           return (
             <blockquote
-              className="border-l-4 border-theme/40 bg-theme/5 px-6 py-1 my-6 italic text-neutral-600 dark:text-neutral-400 rounded-r-lg"
+              className="border-l-4 border-theme/30 bg-theme/5 px-6 py-3 my-8 italic text-neutral-600 dark:text-neutral-400 rounded-r-2xl"
               {...props}
             >
               {children}
             </blockquote>
           );
         },
-        em({ children, ...props }) {
-          return (
-            <em className="ml-[1px] mr-[4px]" {...props}>
-              {children}
-            </em>
-          );
-        },
-        strong({ children, ...props }) {
-          return (
-            <strong className="mx-[1px]" {...props}>
-              {children}
-            </strong>
-          );
-        },
-
-        ul({ children, className, ...props }) {
-          const listClass = className?.includes("contains-task-list")
-            ? "list-none pl-5"
-            : "list-disc pl-6 my-4 marker:text-theme/50";
-          return (
-            <ul className={listClass} {...props}>
-              {children}
-            </ul>
-          );
-        },
-        ol({ children, ...props }) {
-          return (
-            <ol className="list-decimal pl-6 my-4 marker:text-theme/50 marker:font-medium" {...props}>
-              {children}
-            </ol>
-          );
-        },
-        li({ children, ...props }) {
-          return (
-            <li className="pl-2 py-1" {...props}>
-              {children}
-            </li>
-          );
-        },
-        a({ children, ...props }) {
-          return (
-            <a
-              className="text-[#0686c8] dark:text-[#2590f1] hover:underline"
-              {...props}
-            >
-              {children}
-            </a>
-          );
-        },
-        h1({ children, ...props }) {
-          return (
-            <h1
-              id={children?.toString()}
-              {...props}
-              className={`${props.className || ""} text-3xl font-bold mt-8 mb-6 pb-2 border-b border-black/5 dark:border-white/5`.trim()}
-              style={{ ...props.style, scrollMarginTop: "var(--header-scroll-offset, 7rem)" }}
-            >
-              {children}
-            </h1>
-          );
-        },
-        h2({ children, ...props }) {
-          return (
-            <h2
-              id={children?.toString()}
-              {...props}
-              className={`${props.className || ""} text-2xl font-bold mt-8 mb-4`.trim()}
-              style={{ ...props.style, scrollMarginTop: "var(--header-scroll-offset, 7rem)" }}
-            >
-              {children}
-            </h2>
-          );
-        },
-        h3({ children, ...props }) {
-          return (
-            <h3
-              id={children?.toString()}
-              {...props}
-              className={`${props.className || ""} text-xl font-bold mt-4`.trim()}
-              style={{ ...props.style, scrollMarginTop: "var(--header-scroll-offset, 7rem)" }}
-            >
-              {children}
-            </h3>
-          );
-        },
-        h4({ children, ...props }) {
-          return (
-            <h4
-              id={children?.toString()}
-              {...props}
-              className={`${props.className || ""} text-lg font-bold mt-4`.trim()}
-              style={{ ...props.style, scrollMarginTop: "var(--header-scroll-offset, 7rem)" }}
-            >
-              {children}
-            </h4>
-          );
-        },
-        h5({ children, ...props }) {
-          return (
-            <h5
-              id={children?.toString()}
-              {...props}
-              className={`${props.className || ""} text-base font-bold mt-4`.trim()}
-              style={{ ...props.style, scrollMarginTop: "var(--header-scroll-offset, 7rem)" }}
-            >
-              {children}
-            </h5>
-          );
-        },
-        h6({ children, ...props }) {
-          return (
-            <h6
-              id={children?.toString()}
-              {...props}
-              className={`${props.className || ""} text-sm font-bold mt-4`.trim()}
-              style={{ ...props.style, scrollMarginTop: "var(--header-scroll-offset, 7rem)" }}
-            >
-              {children}
-            </h6>
-          );
-        },
-        p({ children, node, ...props }) {
-          return (
-            <p className="mt-4 mb-4 leading-8 text-neutral-800 dark:text-neutral-300" {...props}>
-              {children}
-            </p>
-          );
-        },
-        hr({ children, ...props }) {
-          return <hr className="my-4" {...props} />;
-        },
-        table: ({ node, ...props }) => <div className="overflow-x-auto my-8 rounded-xl border border-black/5 dark:border-white/10"><table className="min-w-full divide-y divide-black/5 dark:divide-white/10" {...props} /></div>,
-        th: ({ node, ...props }) => (
-          <th className="px-4 py-2 border bg-gray-600" {...props} />
+        h1: (props) => <h1 id={props.children?.toString()} style={headingStyle} {...props} className="text-3xl font-extrabold mt-16 mb-8 pb-3 border-b border-black/5 dark:border-white/5" />,
+        h2: (props) => <h2 id={props.children?.toString()} style={headingStyle} {...props} className="text-2xl font-bold mt-12 mb-6" />,
+        h3: (props) => <h3 id={props.children?.toString()} style={headingStyle} {...props} className="text-xl font-bold mt-10 mb-4" />,
+        h4: (props) => <h4 id={props.children?.toString()} style={headingStyle} {...props} className="text-lg font-bold mt-8 mb-4" />,
+        p: (props) => <p {...props} className="my-6 leading-8 text-neutral-800 dark:text-neutral-300" />,
+        ul: (props) => <ul {...props} className="list-disc pl-6 my-6 space-y-3 marker:text-theme/40" />,
+        ol: (props) => <ol {...props} className="list-decimal pl-6 my-6 space-y-3 marker:text-theme/40 font-medium" />,
+        li: (props) => <li {...props} className="pl-2" />,
+        a: (props) => <a {...props} className="text-theme hover:underline underline-offset-4 decoration-2 font-medium" />,
+        hr: () => <hr className="my-12 border-black/5 dark:border-white/5" />,
+        table: (props) => (
+          <div className="overflow-x-auto my-10 rounded-2xl border border-black/5 dark:border-white/10 shadow-sm">
+            <table className="min-w-full divide-y divide-black/5 dark:divide-white/10" {...props} />
+          </div>
         ),
-        td: ({ node, ...props }) => (
-          <td className="px-4 py-2 border" {...props} />
-        ),
-        sup: ({ children, ...props }) => (
-          <sup className="text-xs mr-[4px]" {...props}>
-            {children}
-          </sup>
-        ),
-        sub: ({ children, ...props }) => (
-          <sub className="text-xs mr-[4px]" {...props}>
-            {children}
-          </sub>
-        ),
-        section({ children, ...props }) {
-          if (props.hasOwnProperty("data-footnotes")) {
-            props.className = `${props.className || ""} mt-8`.trim();
-          }
-          const modifiedChildren = React.Children.map(children, (child) => {
-            if (isValidElement(child) && child.props.node.tagName === "ol") {
-              return cloneElement(child, {
-                ...child.props,
-                className: "list-decimal px-10 text-sm text-[#6B7280]",
-              } as React.HTMLAttributes<HTMLParagraphElement>);
-            }
-            return child;
-          });
-          return <section {...props}>{modifiedChildren}</section>;
-        },
-        div({ children, node, ...props }) {
-          return <div {...props}>{children}</div>;
-        },
+        th: (props) => <th {...props} className="px-6 py-4 bg-neutral-50 dark:bg-neutral-900/50 text-left text-xs font-bold text-neutral-500 uppercase tracking-wider" />,
+        td: (props) => <td {...props} className="px-6 py-4 whitespace-nowrap text-sm border-t border-black/5 dark:border-white/5" />,
       }}
-    />), [content, show, colorMode])
+    />
+  ), [content, show, colorMode, headingStyle]);
 
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} className="markdown-container">
       {Content}
-      <Lightbox
-        plugins={[Download, Zoom, Counter, Fullscreen, Thumbnails, Captions]}
-        index={index}
-        slides={slides.current}
-        open={index >= 0}
-        close={() => setIndex(-1)}
-        captions={{ descriptionTextAlign: "center" }}
-      />
+      {index >= 0 && (
+        <Suspense fallback={null}>
+          <LightboxComponent
+            index={index}
+            slides={slides.current}
+            close={() => setIndex(-1)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
