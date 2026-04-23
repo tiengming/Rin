@@ -89,6 +89,7 @@ export function ConfigService(): Hono {
             if (env.AI && typeof env.AI.models === "function") {
                 const allModels = await env.AI.models();
 
+                const isUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
                 const mapModel = (m: any) => ({
                     id: m.id,
                     name: m.name || m.id.split("/").pop() || m.id
@@ -96,9 +97,9 @@ export function ConfigService(): Hono {
 
                 const textModels = allModels
                     .filter(m =>
-                        m.task?.id === "text-generation" ||
+                        (m.task?.id === "text-generation" ||
                         m.task?.name?.toLowerCase().includes("text generation") ||
-                        m.task?.id === "summarization"
+                        m.task?.id === "summarization") && !isUUID(m.id)
                     )
                     .sort((a, b) => {
                         const aId = a.id.toLowerCase();
@@ -113,16 +114,16 @@ export function ConfigService(): Hono {
 
                 const imageModels = allModels
                     .filter(m =>
-                        m.task?.id === "text-to-image" ||
-                        m.task?.name?.toLowerCase().includes("image")
+                        (m.task?.id === "text-to-image" ||
+                        m.task?.name?.toLowerCase().includes("image")) && !isUUID(m.id)
                     )
                     .map(mapModel);
 
                 const audioModels = allModels
                     .filter(m =>
-                        m.task?.id === "speech-to-text" ||
+                        (m.task?.id === "speech-to-text" ||
                         m.task?.name?.toLowerCase().includes("speech") ||
-                        m.task?.id === "text-to-speech"
+                        m.task?.id === "text-to-speech") && !isUUID(m.id)
                     )
                     .map(mapModel);
 
