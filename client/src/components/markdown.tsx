@@ -1,5 +1,5 @@
 import "katex/dist/katex.min.css";
-import React, { cloneElement, isValidElement, useEffect, useMemo, useRef, useCallback, Suspense } from "react";
+import React, { useEffect, useMemo, useRef, useCallback, Suspense, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
@@ -12,7 +12,7 @@ import gfm from "remark-gfm";
 import remarkMermaid from "../remark/remarkMermaid";
 import { remarkAlert } from "remark-github-blockquote-alert";
 import remarkMath from "remark-math";
-import type { SlideImage } from "yet-another-react-lightbox";
+import type { SlideImage, Plugin } from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import "yet-another-react-lightbox/plugins/captions.css";
@@ -60,7 +60,7 @@ function MarkdownImage({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const metadata = useMemo(() => parseImageUrlMetadata(src || ""), [src]);
-  const { isLoaded, handleLoad } = useImageLoadState();
+  const { loaded: isLoaded, onLoad: handleLoad } = useImageLoadState(src);
 
   useEffect(() => {
     if (metadata.blurhash && canvasRef.current) {
@@ -104,7 +104,7 @@ function MarkdownImage({
 }
 
 function LightboxComponent({ index, slides, close }: { index: number; slides: SlideImage[]; close: () => void }) {
-  const [plugins, setPlugins] = React.useState<any[]>([]);
+  const [plugins, setPlugins] = useState<Plugin[]>([]);
 
   useEffect(() => {
     Promise.all([
@@ -115,7 +115,7 @@ function LightboxComponent({ index, slides, close }: { index: number; slides: Sl
       import("yet-another-react-lightbox/plugins/thumbnails"),
       import("yet-another-react-lightbox/plugins/captions"),
     ]).then((modules) => {
-      setPlugins(modules.map(m => m.default));
+      setPlugins(modules.map(m => m.default as Plugin));
     });
   }, []);
 
@@ -135,17 +135,45 @@ function LightboxComponent({ index, slides, close }: { index: number; slides: Sl
   );
 }
 
+function CodeBlock({ children, language, style, codeStyle }: { children: string; language: string; style: { [key: string]: React.CSSProperties }; codeStyle: React.CSSProperties }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="relative group my-6">
+      <SyntaxHighlighter
+        PreTag="div"
+        className="rounded-2xl !bg-neutral-50 dark:!bg-neutral-900/50 border border-black/5 dark:border-white/5 !p-4"
+        language={language}
+        style={style}
+        wrapLongLines={true}
+        codeTagProps={{ style: codeStyle }}
+      >
+        {children.replace(/\n$/, "")}
+      </SyntaxHighlighter>
+      <button
+        className="absolute top-4 right-4 px-3 py-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-md rounded-xl text-xs font-semibold border border-black/5 dark:border-white/10 opacity-0 group-hover:opacity-100 transition-all hover:scale-105 active:scale-95 shadow-sm"
+        onClick={() => {
+          navigator.clipboard.writeText(children);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }}
+      >
+        {copied ? "Copied!" : "Copy"}
+      </button>
+    </div>
+  );
+}
+
 export function Markdown({ content }: { content: string }) {
-  const [index, setIndex] = React.useState(-1);
+  const [index, setIndex] = useState(-1);
   const slides = useRef<SlideImage[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { colorMode } = useColorMode();
+  const colorMode = useColorMode();
 
   const show = useCallback((src: string) => {
     if (!containerRef.current) return;
 
-    const images = Array.from(containerRef.current.querySelectorAll("img.toc-content"));
-    const newSlides = images.map((img: any) => {
+    const images = Array.from(containerRef.current.querySelectorAll("img.toc-content")) as HTMLImageElement[];
+    const newSlides = images.map((img) => {
       const imgName = img.src.split("/").pop()?.split("?")[0] || "Image";
       return {
         src: img.src,
@@ -155,7 +183,7 @@ export function Markdown({ content }: { content: string }) {
     });
 
     slides.current = newSlides;
-    const foundIndex = images.findIndex((img: any) => img.src === src);
+    const foundIndex = images.findIndex((img) => img.src === src);
     setIndex(foundIndex);
   }, []);
 
@@ -163,7 +191,7 @@ export function Markdown({ content }: { content: string }) {
     slides.current = [];
   }, [content]);
 
-  const headingStyle = { scrollMarginTop: "var(--header-scroll-offset, 7rem)" };
+  const headingStyle = useMemo(() => ({ scrollMarginTop: "var(--header-scroll-offset, 7rem)" }), []);
 
   const Content = useMemo(() => (
     <ReactMarkdown
@@ -200,7 +228,6 @@ export function Markdown({ content }: { content: string }) {
           }
         },
         code(props) {
-          const [copied, setCopied] = React.useState(false);
           const { children, className, node, ...rest } = props;
           const match = /language-(\w+)/.exec(className || "");
           const curContent = content.slice(node?.position?.start.offset || 0);
@@ -215,28 +242,13 @@ export function Markdown({ content }: { content: string }) {
 
           if (isCodeBlock) {
             return (
-              <div className="relative group my-6">
-                <SyntaxHighlighter
-                  PreTag="div"
-                  className="rounded-2xl !bg-neutral-50 dark:!bg-neutral-900/50 border border-black/5 dark:border-white/5 !p-4"
-                  language={language}
-                  style={colorMode === "dark" ? vscDarkPlus : base16AteliersulphurpoolLight}
-                  wrapLongLines={true}
-                  codeTagProps={{ style: codeStyle }}
-                >
-                  {String(children).replace(/\n$/, "")}
-                </SyntaxHighlighter>
-                <button
-                  className="absolute top-4 right-4 px-3 py-1.5 bg-white/80 dark:bg-black/50 backdrop-blur-md rounded-xl text-xs font-semibold border border-black/5 dark:border-white/10 opacity-0 group-hover:opacity-100 transition-all hover:scale-105 active:scale-95 shadow-sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(String(children));
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                >
-                  {copied ? "Copied!" : "Copy"}
-                </button>
-              </div>
+              <CodeBlock
+                language={language}
+                style={colorMode === "dark" ? vscDarkPlus : base16AteliersulphurpoolLight}
+                codeStyle={codeStyle}
+              >
+                {String(children)}
+              </CodeBlock>
             );
           }
           return (
@@ -278,7 +290,7 @@ export function Markdown({ content }: { content: string }) {
         td: (props) => <td {...props} className="px-6 py-4 whitespace-nowrap text-sm border-t border-black/5 dark:border-white/5" />,
       }}
     />
-  ), [content, show, colorMode]);
+  ), [content, show, colorMode, headingStyle]);
 
   return (
     <div ref={containerRef} className="markdown-container">
