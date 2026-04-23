@@ -130,7 +130,8 @@ function LightboxComponent({ index, slides, close }: { index: number; slides: Sl
       close={close}
       captions={{ descriptionTextAlign: "center", descriptionMaxLines: 3 }}
       thumbnails={{ position: "bottom", width: 100, height: 60, border: 0, gap: 16 }}
-      animation={{ fade: 250, swipe: 500, zoom: 300 }}
+      animation={{ fade: 300, swipe: 400, zoom: 400 }}
+      zoom={{ maxZoomPixelRatio: 3, doubleTapDelay: 300 }}
       controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
       styles={{ container: { backgroundColor: "transparent" } }}
     />
