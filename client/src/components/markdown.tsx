@@ -1,5 +1,5 @@
 import "katex/dist/katex.min.css";
-import React, { cloneElement, isValidElement, useEffect, useMemo, useRef } from "react";
+import React, { cloneElement, isValidElement, useEffect, useMemo, useRef, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
@@ -16,7 +16,12 @@ import Lightbox, { SlideImage } from "yet-another-react-lightbox";
 import Counter from "yet-another-react-lightbox/plugins/counter";
 import Download from "yet-another-react-lightbox/plugins/download";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
+import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
+import Captions from "yet-another-react-lightbox/plugins/captions";
 import "yet-another-react-lightbox/styles.css";
+import "yet-another-react-lightbox/plugins/thumbnails.css";
+import "yet-another-react-lightbox/plugins/captions.css";
 import { drawBlurhashToCanvas } from "../utils/blurhash";
 import { useColorMode } from "../utils/darkModeUtils";
 import { parseImageUrlMetadata } from "../utils/image-upload";
@@ -38,7 +43,7 @@ const countNewlinesBeforeNode = (text: string, offset: number) => {
 const isMarkdownImageLinkAtEnd = (text: string) => {
   const trimmed = text.trim();
 
-  const match = trimmed.match(/(.*)(!\\[.*?\\]\\(.*?\\))$/s);
+  const match = trimmed.match(/(.*)(!\[.*?\]\((.*?)\))$/s);
 
   if (match) {
     const [, beforeImage, _] = match;
@@ -104,7 +109,7 @@ function MarkdownImage({
         }}
         onLoad={onLoad}
         onError={onError}
-        className={`mx-auto max-w-full cursor-zoom-in transition-opacity ${roundedClass} ${className || ""} ${
+        className={`mx-auto max-w-full cursor-zoom-in transition-all duration-300 hover:brightness-95 active:scale-[0.98] ${roundedClass} ${className || ""} ${
           blurhash && (!loaded || failed) ? "opacity-0" : "opacity-100"
         }`}
       />
@@ -115,13 +120,42 @@ function MarkdownImage({
 export function Markdown({ content }: { content: string }) {
   const colorMode = useColorMode();
   const [index, setIndex] = React.useState(-1);
-  const slides = useRef<SlideImage[]>();
+  const slides = useRef<(SlideImage & { title?: string; description?: string })[]>();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     slides.current = undefined;
   }, [content]);
 
-
+  const show = useCallback((src: string | undefined) => {
+    let slidesLocal = slides.current;
+    if (!slidesLocal) {
+      const parent = containerRef.current;
+      if (!parent) return;
+      const images = parent.querySelectorAll("img");
+      slidesLocal = Array.from(images)
+        .map((image) => {
+          const url = image.getAttribute("src") || "";
+          const filename = url.split("/").pop() || "";
+          const alt = image.getAttribute("alt") || "";
+          return {
+            src: url,
+            alt: alt,
+            title: alt || filename,
+            description: alt ? filename : undefined,
+            imageFit: "contain" as const,
+            download: {
+              url: url,
+              filename: filename,
+            },
+          };
+        })
+        .filter((slide) => slide.src !== "");
+      slides.current = slidesLocal;
+    }
+    const index = slidesLocal?.findIndex((slide) => slide.src === src) ?? -1;
+    setIndex(index);
+  }, []);
 
   const Content = useMemo(() => (
     <ReactMarkdown
@@ -150,13 +184,12 @@ export function Markdown({ content }: { content: string }) {
               show={show}
               rounded={rounded}
               scale={scale}
-              className={props.className}
             />
           );
+
           if (
             newlinesBefore >= 1 ||
-            previousContent.trim().length === 0 ||
-            isMarkdownImageLinkAtEnd(previousContent)
+            isMarkdownImageLinkAtEnd(previousContent + "![alt](" + src + ")")
           ) {
             return (
               <span className="block w-full text-center my-4">
@@ -412,48 +445,19 @@ export function Markdown({ content }: { content: string }) {
           return <div {...props}>{children}</div>;
         },
       }}
-    />), [content])
-
-
-
-  const show = (src: string | undefined) => {
-    let slidesLocal = slides.current;
-    if (!slidesLocal) {
-      const parent = document.getElementsByClassName("toc-content")[0];
-      if (!parent) return;
-      const images = parent.querySelectorAll("img");
-      slidesLocal = Array.from(images)
-        .map((image) => {
-          const url = image.getAttribute("src") || "";
-          const filename = url.split("/").pop() || "";
-          const alt = image.getAttribute("alt") || "";
-          return {
-            src: url,
-            alt: alt,
-            imageFit: "contain" as const,
-            download: {
-              url: url,
-              filename: filename,
-            },
-          };
-        })
-        .filter((slide) => slide.src !== "");
-      slides.current = (slidesLocal);
-    }
-    const index = slidesLocal?.findIndex((slide) => slide.src === src) ?? -1;
-    setIndex(index);
-  };
+    />), [content, show, colorMode])
 
   return (
-    <>
+    <div ref={containerRef}>
       {Content}
       <Lightbox
-        plugins={[Download, Zoom, Counter]}
+        plugins={[Download, Zoom, Counter, Fullscreen, Thumbnails, Captions]}
         index={index}
         slides={slides.current}
         open={index >= 0}
         close={() => setIndex(-1)}
+        captions={{ descriptionTextAlign: "center" }}
       />
-    </>
+    </div>
   );
 }
