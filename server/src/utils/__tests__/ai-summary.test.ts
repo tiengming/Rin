@@ -2,7 +2,13 @@ import { afterEach, describe, expect, it, mock } from "bun:test";
 
 const originalFetch = globalThis.fetch;
 
-const getAIConfigMock = mock();
+const getAIConfigMock = mock(() => Promise.resolve({
+  enabled: true,
+  provider: "worker-ai",
+  model: "llama-3-8b",
+  api_key: "",
+  api_url: "",
+}));
 
 mock.module("../db-config", () => ({
   getAIConfig: getAIConfigMock,
@@ -10,7 +16,7 @@ mock.module("../db-config", () => ({
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
-  getAIConfigMock.mockReset();
+  getAIConfigMock.mockClear();
 });
 
 describe("generateAISummaryResult", () => {
