@@ -1,0 +1,52 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: -apple-system, sans-serif; padding: 40px; }
+            .markdown-container { max-width: 800px; margin: 0 auto; }
+            /* Mocking some styles from the app */
+            :root { --theme-rgb: 252 70 107; }
+            .text-theme { color: rgb(var(--theme-rgb)); }
+        </style>
+        <!-- Include Tailwind via CDN for verification if needed, but our CSS is in index.css -->
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body>
+        <div id="root"></div>
+        <script>
+            // This is a bit complex to mock the whole React app,
+            // so we will just test the visual elements by creating a fake UI that looks like our lightbox.
+        </script>
+
+        <div class="markdown-container">
+            <h1 class="text-3xl font-extrabold mt-16 mb-8 pb-3 border-b border-black/5">Apple OS Style Lightbox Optimization</h1>
+            <p class="my-6 leading-8 text-neutral-800">Testing the new lightbox interaction and styles.</p>
+
+            <div class="relative inline-block overflow-hidden transition-all duration-500 ease-in-out bg-neutral-100 rounded-2xl" style="width: calc(0.85 * 100%); aspect-ratio: 16/9;">
+                <img src="https://picsum.photos/1200/800" class="toc-content cursor-zoom-in w-full h-auto transition-all duration-500 hover:brightness-90 active:scale-[0.98]" alt="Test Image">
+            </div>
+
+            <p class="my-6 leading-8 text-neutral-800">Clicking the image should open the lightbox.</p>
+        </div>
+
+        <!-- Mock Lightbox Overlay -->
+        <div id="mock-lightbox" style="display: none; position: fixed; inset: 0; z-index: 9999;">
+            <div class="yarl__backdrop" style="position: absolute; inset: 0; background-color: rgba(255, 255, 255, 0.4); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);"></div>
+            <div style="position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <img src="https://picsum.photos/1200/800" style="max-height: 80vh; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); transform: scale(1);">
+                <div style="margin-top: 20px; text-align: center; color: #333;">
+                    <div style="font-weight: 600; font-size: 1.1rem; text-shadow: 0 1px 4px rgba(0,0,0,0.1);">Test Image</div>
+                    <div style="opacity: 0.8; font-size: 0.9rem;">picsum.photos</div>
+                </div>
+            </div>
+            <button style="position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.05); border: none; font-size: 24px; cursor: pointer;">×</button>
+        </div>
+
+        <script>
+            document.querySelector('.toc-content').onclick = () => {
+                document.getElementById('mock-lightbox').style.display = 'block';
+            };
+        </script>
+    </body>
+    </html>

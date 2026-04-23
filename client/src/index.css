@@ -210,3 +210,68 @@ a.toc-link {
 .is-active-link::before {
   @apply bg-theme;
 }
+
+/* Lightbox Apple OS Style */
+.yarl__backdrop {
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.dark .yarl__backdrop {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.yarl__container {
+  --yarl__thumbnails_container_background_color: transparent;
+  --yarl__thumbnails_thumbnail_background: rgba(255, 255, 255, 0.1);
+  --yarl__thumbnails_thumbnail_active_border_color: #fff;
+  --yarl__button_filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.3));
+}
+
+.yarl__button {
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.yarl__button:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  transform: scale(1.05);
+}
+
+.dark .yarl__button:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.yarl__caption_container {
+  background: none !important;
+  padding: 24px !important;
+}
+
+.yarl__caption_title {
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.yarl__caption_description {
+  opacity: 0.8 !important;
+  font-size: 0.9rem !important;
+}
+
+.yarl__thumbnails_thumbnail {
+  border-radius: 6px;
+  border: 2px solid transparent !important;
+  transition: all 0.2s ease;
+}
+
+.yarl__thumbnails_thumbnail_active {
+  border-color: var(--theme-rgb) !important;
+  transform: scale(1.05);
+}
+
+.yarl__slide_image {
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
