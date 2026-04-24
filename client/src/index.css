@@ -211,109 +211,128 @@ a.toc-link {
   @apply bg-theme;
 }
 
-/* --- AppleOS 风格灯箱深度优化 --- */
 
-/* 1. 背景层：高饱和度毛玻璃 */
+/**
+ * Apple OS Style Lightbox Optimization
+ * 适配明暗主题，修复高斯模糊与缩略图背景问题
+ */
+
+/* --- 1. 背景层：核心模糊逻辑 --- */
+.yarl__root {
+  /* 确保根容器不带任何背景干扰，防止覆盖模糊效果 */
+  background-color: transparent !important;
+}
+
 .yarl__backdrop {
-  background-color: rgba(255, 255, 255, 0.4) !important;
-  backdrop-filter: blur(30px) saturate(190%) brightness(105%);
-  -webkit-backdrop-filter: blur(30px) saturate(190%) brightness(105%);
+  /* 明亮模式：高饱和度、高亮度磨砂玻璃 */
+  background-color: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(35px) saturate(210%) brightness(105%) !important;
+  -webkit-backdrop-filter: blur(35px) saturate(210%) brightness(105%) !important;
+  opacity: 1 !important;
 }
 
 .dark .yarl__backdrop {
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  backdrop-filter: blur(35px) saturate(160%) brightness(70%);
-  -webkit-backdrop-filter: blur(35px) saturate(160%) brightness(70%);
+  /* 暗黑模式：深邃、带有环境光感的烟熏玻璃 */
+  background-color: rgba(18, 18, 18, 0.65) !important;
+  backdrop-filter: blur(40px) saturate(160%) brightness(85%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(160%) brightness(85%) !important;
 }
 
-/* 2. 缩略图容器：彻底解决黑色背景问题 */
-.yarl__thumbnails_container {
+/* --- 2. 容器清洗：强制穿透模糊 --- */
+.yarl__container,
+.yarl__thumbnails_container,
+.yarl__thumbnails_wrapper,
+.yarl__carousel {
   background-color: transparent !important;
-  padding: 20px 0 !important;
 }
 
-/* 移除缩略图两侧的陈旧黑色渐变 */
+/* 杀掉干扰美感的旧式阴影 */
 .yarl__thumbnails_vignette {
+  display: none !important;
   background: none !important;
 }
 
-/* 3. 缩略图单项 (Thumbnail Item) 优化 */
+/* --- 3. 缩略图项优化 --- */
 .yarl__thumbnails_thumbnail {
-  /* 解决黑色背景：将其设为半透明或跟随主题 */
-  background-color: rgba(0, 0, 0, 0.05) !important;
+  /* 解决背景黑块：按钮背景设为透明，依赖内部渲染内容 */
+  background-color: transparent !important;
   border-radius: 12px !important;
   overflow: hidden;
   border: 2px solid transparent !important;
+  padding: 0 !important;
   transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1) !important;
 }
 
-.dark .yarl__thumbnails_thumbnail {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-/* 激活状态：Apple 典型的缩放与主题色边框 */
+/* 激活状态：向上浮起并带有呼吸感的阴影 */
 .yarl__thumbnails_thumbnail_active {
-  transform: scale(1.12) translateY(-4px) !important;
+  transform: scale(1.15) translateY(-6px) !important;
   border-color: rgb(var(--theme-rgb)) !important;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25) !important;
+  z-index: 10;
 }
 
-/* 4. 控制按钮：悬浮胶囊化 */
-.yarl__button {
-  background-color: rgba(255, 255, 255, 0.2) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+/* --- 4. 控制项：毛玻璃胶囊设计 --- */
+.yarl__button, 
+.yarl__counter {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
   border-radius: 50% !important;
-  margin: 10px !important;
-  opacity: 0.8;
-  transition: all 0.2s ease;
+  margin: 12px !important;
+  color: #1d1d1f !important; /* Apple 标准深灰 */
+  opacity: 0; /* 默认隐藏，hover 显现 */
+  transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.2s ease !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.dark .yarl__button {
-  background-color: rgba(0, 0, 0, 0.2) !important;
+.dark .yarl__button, 
+.dark .yarl__counter {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f5f5f7 !important;
+}
+
+.yarl__container:hover .yarl__button,
+.yarl__container:hover .yarl__counter {
+  opacity: 0.8;
 }
 
 .yarl__button:hover {
-  opacity: 1;
+  opacity: 1 !important;
   transform: scale(1.1);
 }
 
-/* 5. 主图呈现：圆角与内发光 */
-.yarl__slide_image {
+/* 计数器特殊间距补丁 */
+.yarl__counter {
   border-radius: 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
+  padding: 4px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500;
 }
 
+/* --- 5. 主图呈现 --- */
+.yarl__slide_image {
+  border-radius: 22px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 45px 90px rgba(0, 0, 0, 0.45);
+  transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* --- 6. 文字信息优化 --- */
 .yarl__caption_container {
-  background: none !important;
-  padding: 32px !important;
+  background: linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 100%) !important;
+  padding: 40px !important;
   opacity: 0;
   transition: opacity 0.4s ease;
 }
 
-.yarl__container:hover .yarl__caption_container {
-  opacity: 1;
-}
-
 .yarl__caption_title {
   font-weight: 600 !important;
-  font-size: 1.2rem !important;
-  letter-spacing: -0.01em;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-size: 1.25rem !important;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
 }
 
 .yarl__caption_description {
-  opacity: 0.7 !important;
+  opacity: 0.8 !important;
   font-size: 0.95rem !important;
-  margin-top: 4px !important;
-}
-
-.yarl__counter {
-  opacity: 0;
-  transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.2s ease;
-}
-
-.yarl__container:hover .yarl__counter {
-  opacity: 0.8;
 }
