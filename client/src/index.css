@@ -238,12 +238,33 @@ a.toc-link {
   -webkit-backdrop-filter: blur(40px) saturate(160%) brightness(85%) !important;
 }
 
-/* --- 2. 容器清洗：强制穿透模糊 --- */
+/* --- 2. 容器清洗与局部模糊：强制穿透并增加毛玻璃区域 --- */
 .yarl__container,
-.yarl__thumbnails_container,
 .yarl__thumbnails_wrapper,
 .yarl__carousel {
   background-color: transparent !important;
+}
+
+/* 顶部工具栏：毛玻璃效果 */
+.yarl__toolbar {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
+
+.dark .yarl__toolbar {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 底部缩略图区域：毛玻璃效果 */
+.yarl__thumbnails_container {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
+
+.dark .yarl__thumbnails_container {
+  background-color: rgba(0, 0, 0, 0.3) !important;
 }
 
 /* 杀掉干扰美感的旧式阴影 */
@@ -317,12 +338,18 @@ a.toc-link {
   transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* --- 6. 文字信息优化 --- */
+/* --- 6. 文字信息优化：增加毛玻璃底色 --- */
 .yarl__caption_container {
-  background: linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 100%) !important;
-  padding: 40px !important;
+  background-color: rgba(255, 255, 255, 0.5) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  padding: 24px 40px !important;
   opacity: 0;
   transition: opacity 0.4s ease;
+}
+
+.dark .yarl__caption_container {
+  background-color: rgba(0, 0, 0, 0.4) !important;
 }
 
 .yarl__caption_title {

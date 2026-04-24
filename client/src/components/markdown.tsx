@@ -159,8 +159,9 @@ if (plugins.length === 0) return null;
       styles={{
         root: { backgroundColor: "transparent" },
         container: { backgroundColor: "transparent" },
+        toolbar: { backgroundColor: "transparent" },
         thumbnailsContainer: { backgroundColor: "transparent" },
-        thumbnail: { backgroundColor: "transparent" }
+        thumbnail: { backgroundColor: "transparent" },
       }}
     />
   );
