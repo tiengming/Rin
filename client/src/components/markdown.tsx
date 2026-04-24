@@ -311,19 +311,16 @@ export function Markdown({ content, compact }: { content: string; compact?: bool
         },
         blockquote({ children, ...props }) {
           return (
-            <blockquote
-              className="border-l-4 border-theme/30 bg-theme/5 px-6 py-3 my-8 italic text-neutral-600 dark:text-neutral-400 rounded-r-2xl"
-              {...props}
-            >
+            <blockquote {...props}>
               {children}
             </blockquote>
           );
         },
-        h1: (props) => <h1 id={props.children?.toString()} style={headingStyle} {...props} className="text-3xl font-extrabold mt-16 mb-8 pb-3 border-b border-black/5 dark:border-white/5" />,
-        h2: (props) => <h2 id={props.children?.toString()} style={headingStyle} {...props} className="text-2xl font-bold mt-12 mb-6" />,
-        h3: (props) => <h3 id={props.children?.toString()} style={headingStyle} {...props} className="text-xl font-bold mt-10 mb-4" />,
-        h4: (props) => <h4 id={props.children?.toString()} style={headingStyle} {...props} className="text-lg font-bold mt-8 mb-4" />,
-        p: (props) => <p {...props} className="my-6 leading-8 text-neutral-800 dark:text-neutral-300" />,
+        h1: (props) => <h1 id={props.children?.toString()} style={headingStyle} {...props} />,
+        h2: (props) => <h2 id={props.children?.toString()} style={headingStyle} {...props} />,
+        h3: (props) => <h3 id={props.children?.toString()} style={headingStyle} {...props} />,
+        h4: (props) => <h4 id={props.children?.toString()} style={headingStyle} {...props} />,
+        p: (props) => <p {...props} />,
         ul: (props) => <ul {...props} className="list-disc pl-6 my-6 space-y-3 marker:text-theme/40" />,
         ol: (props) => <ol {...props} className="list-decimal pl-6 my-6 space-y-3 marker:text-theme/40 font-medium" />,
         li: (props) => <li {...props} className="pl-2" />,
