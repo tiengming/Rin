@@ -63,6 +63,7 @@ function MarkdownImage({ src, alt, show, rounded, scale, compact }: { src?: stri
       className="relative inline-block overflow-hidden transition-all duration-500 ease-in-out bg-neutral-100 dark:bg-neutral-800/50"
       style={{
         width: `calc(${scale} * 100%)`,
+        maxWidth: metadata.width ? `${metadata.width}px` : "100%",
         aspectRatio: shouldCrop ? "3/4" : (isLoaded ? "auto" : aspectRatio),
         borderRadius: rounded ? "16px" : "4px",
       }}
@@ -86,7 +87,7 @@ function MarkdownImage({ src, alt, show, rounded, scale, compact }: { src?: stri
         } ${shouldCrop ? "h-full object-cover object-top" : ""}`}
       />
       {shouldCrop && (
-        <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none">
+        <span className="absolute bottom-2 right-2 bg-black/40 text-white text-[10px] px-1.5 py-0.5 rounded-lg backdrop-blur-md pointer-events-none">
           长图
         </span>
       )}
@@ -133,10 +134,10 @@ if (plugins.length === 0) return null;
       // 2. 缩略图间距增加到 20，让 Apple 风格的 Scale 动画有空间，不拥挤
       thumbnails={{ 
         position: "bottom", 
-        width: 100, 
-        height: 60, 
+        width: 110,
+        height: 74,
         border: 0, 
-        gap: 20 
+        gap: 24
       }}
       // 3. 动画曲线调优
       animation={{ fade: 400, swipe: 600, navigation: 400 }}
@@ -147,7 +148,7 @@ if (plugins.length === 0) return null;
         slideFooter: () => null,
         // 5. 缩略图渲染逻辑保持现状（CSS 会接管背景和圆角）
         thumbnail: ({ slide }) => (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center bg-neutral-200/50 dark:bg-neutral-800/50">
              <img src={slide.src} className="object-cover w-full h-full" alt="" />
           </div>
         ),
