@@ -20,7 +20,7 @@
 }
 
 body {
-  @apply bg-background-light dark:bg-background-dark text-gray-800;
+  @apply bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200;
   font-family: Cantarell, "Source Han Serif CN VF" !important;
 }
 
@@ -289,6 +289,7 @@ html[data-color-mode="dark"] .yarl__toolbar .yarl__button {
   --md-tracking: 0.02em;
 }
 
+
 /* 全局过渡：切换明暗模式时提供平滑的视觉缓冲 */
 .markdown-container * {
   transition: color 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
@@ -305,6 +306,18 @@ html[data-color-mode="dark"] .yarl__toolbar .yarl__button {
 }
 html[data-color-mode="dark"] .markdown-container p {
   color: var(--md-text-dark);
+}
+
+/* 补充：确保列表在暗黑模式下也使用变量颜色 */
+html[data-color-mode="dark"] .markdown-container ol,
+html[data-color-mode="dark"] .markdown-container ul,
+html[data-color-mode="dark"] .markdown-container li {
+  color: var(--md-text-dark);
+}
+
+/* 针对列表序号（Marker）的优化 */
+html[data-color-mode="dark"] .markdown-container li::marker {
+  color: rgba(255, 255, 255, 0.4); /* 序号稍微暗一点，突出文字 */
 }
 
 /* 标题结构校准 */
