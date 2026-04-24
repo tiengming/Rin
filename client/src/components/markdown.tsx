@@ -94,10 +94,10 @@ function MarkdownImage({ src, alt, show, rounded, scale, compact }: { src?: stri
   );
 }
 
+
 function LightboxComponent({ index, slides, close }: { index: number; slides: SlideImage[]; close: () => void }) {
   const [plugins, setPlugins] = useState<Plugin[]>([]);
   const isSingle = slides.length === 1;
-
   useEffect(() => {
     const loaders = [
       import("yet-another-react-lightbox/plugins/download"),
@@ -116,7 +116,7 @@ function LightboxComponent({ index, slides, close }: { index: number; slides: Sl
     });
   }, [isSingle]);
 
-  if (plugins.length === 0) return null;
+if (plugins.length === 0) return null;
 
   return (
     <Lightbox
@@ -125,22 +125,39 @@ function LightboxComponent({ index, slides, close }: { index: number; slides: Sl
       slides={slides}
       open={true}
       close={close}
-      captions={{ descriptionTextAlign: "center", descriptionMaxLines: 3 }}
-      thumbnails={{ position: "bottom", width: 100, height: 60, border: 0, gap: 16 }}
-      animation={{ fade: 400, swipe: 600 }}
+      // 1. 调整字幕显示：增加一点内边距感
+      captions={{ 
+        descriptionTextAlign: "center", 
+        descriptionMaxLines: 3,
+      }}
+      // 2. 缩略图间距增加到 20，让 Apple 风格的 Scale 动画有空间，不拥挤
+      thumbnails={{ 
+        position: "bottom", 
+        width: 100, 
+        height: 60, 
+        border: 0, 
+        gap: 20 
+      }}
+      // 3. 动画曲线调优
+      animation={{ fade: 400, swipe: 600, navigation: 400 }}
       render={{
         buttonPrev: isSingle ? () => null : undefined,
         buttonNext: isSingle ? () => null : undefined,
+        // 4. 彻底杀掉默认的页脚背景
         slideFooter: () => null,
+        // 5. 缩略图渲染逻辑保持现状（CSS 会接管背景和圆角）
         thumbnail: ({ slide }) => (
-          <div className="w-full h-full flex items-center justify-center bg-neutral-200/50 dark:bg-neutral-800/50">
+          <div className="w-full h-full flex items-center justify-center">
              <img src={slide.src} className="object-cover w-full h-full" alt="" />
           </div>
         ),
       }}
       zoom={{ maxZoomPixelRatio: 3, doubleTapDelay: 300 }}
+      // 6. 交互灵魂：允许下拉/背景点击关闭
       controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
+      // 7. 样式打通：必须设为 transparent 以启用 CSS 的 backdrop-filter
       styles={{
+        root: { backgroundColor: "transparent" },
         container: { backgroundColor: "transparent" },
         thumbnailsContainer: { backgroundColor: "transparent" },
         thumbnail: { backgroundColor: "transparent" }
@@ -182,26 +199,32 @@ export function Markdown({ content, compact }: { content: string; compact?: bool
   const slides = useRef<SlideImage[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const colorMode = useColorMode();
-
+  
   const show = useCallback((src: string) => {
     if (!containerRef.current) return;
-
+  
     const images = Array.from(containerRef.current.querySelectorAll("img.toc-content")) as HTMLImageElement[];
     const newSlides = images.map((img) => {
-      const isFileName = img.alt && /^[a-zA-Z0-9_\-.]+\.[a-zA-Z0-9]+$/.test(img.alt);
+      // 扩展正则：识别常见的文件名格式或 URL 片段
+      const isGenericName = img.alt && (
+        /^[a-zA-Z0-9_\-.]+\.[a-zA-Z0-9]+$/.test(img.alt) || 
+        img.alt === "image.png" || 
+        img.alt === "image"
+      );
+  
       return {
         src: img.src,
-        alt: img.alt,
-        title: isFileName ? "" : (img.alt || undefined),
+        // 如果是文件名，设为 undefined 从而不渲染标题，保持极致留白
+        title: isGenericName ? undefined : (img.alt || undefined),
         description: undefined,
       };
     });
-
+  
     slides.current = newSlides;
     const foundIndex = images.findIndex((img) => img.src === src);
     setIndex(foundIndex);
   }, []);
-
+  
   useEffect(() => {
     slides.current = [];
   }, [content]);
