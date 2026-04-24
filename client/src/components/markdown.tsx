@@ -1,63 +1,41 @@
-import "katex/dist/katex.min.css";
-import React, { useEffect, useMemo, useRef, useCallback, Suspense, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense, lazy } from "react";
 import ReactMarkdown from "react-markdown";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import {
-  base16AteliersulphurpoolLight,
-  vscDarkPlus,
-} from "react-syntax-highlighter/dist/esm/styles/prism";
+import gfm from "remark-gfm";
+import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
-import gfm from "remark-gfm";
-import remarkMermaid from "../remark/remarkMermaid";
-import { remarkAlert } from "remark-github-blockquote-alert";
-import remarkMath from "remark-math";
-import type { SlideImage, Plugin } from "yet-another-react-lightbox";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus, base16AteliersulphurpoolLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useColorMode } from "../utils/darkModeUtils";
+import Lightbox, { Plugin, SlideImage } from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import "yet-another-react-lightbox/plugins/captions.css";
-import { drawBlurhashToCanvas } from "../utils/blurhash";
-import { useColorMode } from "../utils/darkModeUtils";
+import "yet-another-react-lightbox/plugins/counter.css";
 import { parseImageUrlMetadata } from "../utils/image-upload";
 import { useImageLoadState } from "../utils/use-image-load-state";
+import { drawBlurhashToCanvas } from "../utils/blurhash";
+import remarkMermaid from "../remark/remarkMermaid";
+import { remarkAlert } from "remark-github-blockquote-alert";
+import "remark-github-blockquote-alert/alert.css";
 
-const Lightbox = React.lazy(() => import("yet-another-react-lightbox"));
-
-const countNewlinesBeforeNode = (text: string, offset: number) => {
-  let newlinesBefore = 0;
+function countNewlinesBeforeNode(content: string, offset: number) {
+  let count = 0;
   for (let i = offset - 1; i >= 0; i--) {
-    if (text[i] === "\n") {
-      newlinesBefore++;
-    } else {
+    if (content[i] === "\n") {
+      count++;
+    } else if (content[i] !== " " && content[i] !== "\t") {
       break;
     }
   }
-  return newlinesBefore;
-};
+  return count;
+}
 
-const isMarkdownImageLinkAtEnd = (text: string) => {
-  const trimmed = text.trim();
-  const match = trimmed.match(/(.*)(!\[.*?\]\((.*?)\))$/s);
-  if (match) {
-    const [, beforeImage] = match;
-    return beforeImage.trim() === "" || beforeImage.endsWith("\n");
-  }
-  return false;
-};
+function isMarkdownImageLinkAtEnd(content: string) {
+  return /!\[.*\]\(.*\)$/.test(content.trim());
+}
 
-function MarkdownImage({
-  src,
-  alt,
-  show,
-  rounded,
-  scale,
-}: {
-  src?: string;
-  alt?: string;
-  show: (src: string) => void;
-  rounded: boolean;
-  scale: string;
-}) {
+function MarkdownImage({ src, alt, show, rounded, scale, compact }: { src?: string; alt?: string; show: (src: string) => void; rounded: boolean; scale: string; compact?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const metadata = useMemo(() => parseImageUrlMetadata(src || ""), [src]);
   const { loaded: isLoaded, onLoad: handleLoad, onError, imageRef } = useImageLoadState(src);
@@ -72,12 +50,15 @@ function MarkdownImage({
     ? metadata.width / metadata.height
     : 16 / 9;
 
+  const isTall = aspectRatio < 1;
+  const shouldCrop = compact && isTall;
+
   return (
     <div
       className="relative inline-block overflow-hidden transition-all duration-500 ease-in-out bg-neutral-100 dark:bg-neutral-800/50"
       style={{
         width: `calc(${scale} * 100%)`,
-        aspectRatio: isLoaded ? "auto" : aspectRatio,
+        aspectRatio: shouldCrop ? "3/4" : (isLoaded ? "auto" : aspectRatio),
         borderRadius: rounded ? "16px" : "4px",
       }}
     >
@@ -97,27 +78,38 @@ function MarkdownImage({
         onClick={() => src && show(src)}
         className={`toc-content cursor-zoom-in w-full h-auto transition-all duration-500 hover:brightness-90 active:scale-[0.98] ${
           isLoaded ? "opacity-100" : "opacity-0 scale-105"
-        }`}
+        } ${shouldCrop ? "h-full object-cover object-top" : ""}`}
       />
+      {shouldCrop && (
+        <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none">
+          长图
+        </span>
+      )}
     </div>
   );
 }
 
 function LightboxComponent({ index, slides, close }: { index: number; slides: SlideImage[]; close: () => void }) {
   const [plugins, setPlugins] = useState<Plugin[]>([]);
+  const isSingle = slides.length === 1;
 
   useEffect(() => {
-    Promise.all([
-      import("yet-another-react-lightbox/plugins/counter"),
+    const loaders = [
       import("yet-another-react-lightbox/plugins/download"),
       import("yet-another-react-lightbox/plugins/zoom"),
       import("yet-another-react-lightbox/plugins/fullscreen"),
-      import("yet-another-react-lightbox/plugins/thumbnails"),
       import("yet-another-react-lightbox/plugins/captions"),
-    ]).then((modules) => {
+    ];
+
+    if (!isSingle) {
+      loaders.push(import("yet-another-react-lightbox/plugins/counter"));
+      loaders.push(import("yet-another-react-lightbox/plugins/thumbnails"));
+    }
+
+    Promise.all(loaders).then((modules) => {
       setPlugins(modules.map(m => m.default as Plugin));
     });
-  }, []);
+  }, [isSingle]);
 
   if (plugins.length === 0) return null;
 
@@ -132,8 +124,8 @@ function LightboxComponent({ index, slides, close }: { index: number; slides: Sl
       thumbnails={{ position: "bottom", width: 100, height: 60, border: 0, gap: 16 }}
       animation={{ fade: 400, swipe: 600 }}
       render={{
-        buttonPrev: () => null,
-        buttonNext: () => null,
+        buttonPrev: isSingle ? () => null : undefined,
+        buttonNext: isSingle ? () => null : undefined,
         slideFooter: () => null,
       }}
       zoom={{ maxZoomPixelRatio: 3, doubleTapDelay: 300 }}
@@ -171,7 +163,7 @@ function CodeBlock({ children, language, style, codeStyle }: { children: string;
   );
 }
 
-export function Markdown({ content }: { content: string }) {
+export function Markdown({ content, compact }: { content: string; compact?: boolean }) {
   const [index, setIndex] = useState(-1);
   const slides = useRef<SlideImage[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -182,11 +174,11 @@ export function Markdown({ content }: { content: string }) {
 
     const images = Array.from(containerRef.current.querySelectorAll("img.toc-content")) as HTMLImageElement[];
     const newSlides = images.map((img) => {
-      const imgName = img.src.split("/").pop()?.split("?")[0] || "Image";
       return {
         src: img.src,
-        title: img.alt || decodeURIComponent(imgName).replace(/\.[^/.]+$/, ""),
-        description: img.alt ? imgName : undefined,
+        alt: img.alt,
+        title: img.alt || undefined,
+        description: undefined,
       };
     });
 
@@ -218,6 +210,7 @@ export function Markdown({ content }: { content: string }) {
               show={show}
               rounded={rounded}
               scale={scale}
+              compact={compact}
             />
           );
 
@@ -234,6 +227,13 @@ export function Markdown({ content }: { content: string }) {
               </span>
             );
           }
+        },
+        iframe(props) {
+            return (
+                <div className="w-full aspect-video rounded-2xl overflow-hidden my-6 border border-black/5 dark:border-white/5 shadow-sm">
+                    <iframe {...props} className="w-full h-full" />
+                </div>
+            )
         },
         code(props) {
           const { children, className, node, ...rest } = props;
@@ -300,7 +300,7 @@ export function Markdown({ content }: { content: string }) {
     >
       {content}
     </ReactMarkdown>
-  ), [content, show, colorMode, headingStyle]);
+  ), [content, show, colorMode, headingStyle, compact]);
 
   return (
     <div ref={containerRef} className="markdown-container">

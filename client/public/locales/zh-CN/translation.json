@@ -196,6 +196,7 @@
     "title": "动态",
     "total$count_one": "{{count}} 条动态",
     "total$count_other": "{{count}} 条动态"
+    ,"expand": "展开查看全部"
   },
   "next": "下一页",
   "no_more": "没有更多了",
