@@ -211,61 +211,78 @@ a.toc-link {
   @apply bg-theme;
 }
 
-/* Apple-style Lightbox Optimization */
+/* --- AppleOS 风格灯箱深度优化 --- */
+
+/* 1. 背景层：高饱和度毛玻璃 */
 .yarl__backdrop {
   background-color: rgba(255, 255, 255, 0.4) !important;
-  backdrop-filter: blur(25px) brightness(80%) saturate(180%);
-  -webkit-backdrop-filter: blur(25px) brightness(80%) saturate(180%);
-  transition: backdrop-filter 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  backdrop-filter: blur(30px) saturate(190%) brightness(105%);
+  -webkit-backdrop-filter: blur(30px) saturate(190%) brightness(105%);
 }
 
 .dark .yarl__backdrop {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-  backdrop-filter: blur(25px) brightness(30%) saturate(150%);
-  -webkit-backdrop-filter: blur(25px) brightness(30%) saturate(150%);
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(35px) saturate(160%) brightness(70%);
+  -webkit-backdrop-filter: blur(35px) saturate(160%) brightness(70%);
 }
 
-.yarl__root {
-  --yarl__thumbnails_container_background_color: transparent;
-  --yarl__color_backdrop: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(20px) saturate(180%);
-}
-
-.yarl__container {
+/* 2. 缩略图容器：彻底解决黑色背景问题 */
+.yarl__thumbnails_container {
   background-color: transparent !important;
-  --yarl__thumbnails_container_background_color: transparent;
-  --yarl__thumbnails_thumbnail_background: rgba(255, 255, 255, 0.1);
-  --yarl__thumbnails_thumbnail_active_border_color: rgb(var(--theme-rgb));
-  --yarl__button_filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.3));
+  padding: 20px 0 !important;
 }
 
-/* Natural Controls: Hidden by default, fade in on interaction */
-.yarl__button,
-.yarl__counter {
-  opacity: 0;
-  transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.2s ease;
+/* 移除缩略图两侧的陈旧黑色渐变 */
+.yarl__thumbnails_vignette {
+  background: none !important;
 }
 
-.yarl__container:hover .yarl__button,
-.yarl__container:hover .yarl__counter {
+/* 3. 缩略图单项 (Thumbnail Item) 优化 */
+.yarl__thumbnails_thumbnail {
+  /* 解决黑色背景：将其设为半透明或跟随主题 */
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  border: 2px solid transparent !important;
+  transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+.dark .yarl__thumbnails_thumbnail {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 激活状态：Apple 典型的缩放与主题色边框 */
+.yarl__thumbnails_thumbnail_active {
+  transform: scale(1.12) translateY(-4px) !important;
+  border-color: rgb(var(--theme-rgb)) !important;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* 4. 控制按钮：悬浮胶囊化 */
+.yarl__button {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 50% !important;
+  margin: 10px !important;
   opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.dark .yarl__button {
+  background-color: rgba(0, 0, 0, 0.2) !important;
 }
 
 .yarl__button:hover {
-  opacity: 1 !important;
+  opacity: 1;
   transform: scale(1.1);
 }
 
-/* Continuous Corners and Physics */
+/* 5. 主图呈现：圆角与内发光 */
 .yarl__slide_image {
-  @apply rounded-2xl shadow-2xl;
-  border: 0.5px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.dark .yarl__slide_image {
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
 }
 
 .yarl__caption_container {
@@ -292,24 +309,11 @@ a.toc-link {
   margin-top: 4px !important;
 }
 
-/* Thumbnails Refinement */
-.yarl__thumbnails_thumbnail {
-  border-radius: 12px !important;
-  overflow: hidden;
-  border: 2px solid transparent !important;
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1) !important;
+.yarl__counter {
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.2s ease;
 }
 
-.yarl__thumbnails_thumbnail_active {
-  border-color: rgb(var(--theme-rgb)) !important;
-  transform: scale(1.1) !important;
-  box-shadow: 0 8px 24px rgba(var(--theme-rgb), 0.4);
-}
-
-.yarl__fullsize_button {
-  background-color: rgba(255, 255, 255, 0.15) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 50% !important;
-  margin: 16px !important;
+.yarl__container:hover .yarl__counter {
+  opacity: 0.8;
 }
