@@ -195,8 +195,8 @@
     "publish": "Publish Moment",
     "title": "Moments",
     "total$count_one": "{{count}} moment in total",
-    "total$count_other": "{{count}} moments in total"
-    ,"expand": "Show More"
+    "total$count_other": "{{count}} moments in total",
+    "expand": "Show More"
   },
   "next": "Next Page",
   "no_more": "No More",

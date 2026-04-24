@@ -1,23 +1,28 @@
-import { useCallback, useEffect, useMemo, useRef, useState, Suspense, lazy } from "react";
+import "katex/dist/katex.min.css";
+import React, { useEffect, useMemo, useRef, useCallback, Suspense, useState, lazy } from "react";
 import ReactMarkdown from "react-markdown";
-import gfm from "remark-gfm";
-import remarkMath from "remark-math";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import {
+  base16AteliersulphurpoolLight,
+  vscDarkPlus,
+} from "react-syntax-highlighter/dist/esm/styles/prism";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus, base16AteliersulphurpoolLight } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { useColorMode } from "../utils/darkModeUtils";
-import Lightbox, { Plugin, SlideImage } from "yet-another-react-lightbox";
+import gfm from "remark-gfm";
+import remarkMermaid from "../remark/remarkMermaid";
+import { remarkAlert } from "remark-github-blockquote-alert";
+import remarkMath from "remark-math";
+import type { SlideImage, Plugin } from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 import "yet-another-react-lightbox/plugins/counter.css";
+import { drawBlurhashToCanvas } from "../utils/blurhash";
+import { useColorMode } from "../utils/darkModeUtils";
 import { parseImageUrlMetadata } from "../utils/image-upload";
 import { useImageLoadState } from "../utils/use-image-load-state";
-import { drawBlurhashToCanvas } from "../utils/blurhash";
-import remarkMermaid from "../remark/remarkMermaid";
-import { remarkAlert } from "remark-github-blockquote-alert";
-import "remark-github-blockquote-alert/alert.css";
+
+const Lightbox = lazy(() => import("yet-another-react-lightbox"));
 
 function countNewlinesBeforeNode(content: string, offset: number) {
   let count = 0;
