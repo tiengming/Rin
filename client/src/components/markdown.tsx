@@ -162,7 +162,6 @@ if (plugins.length === 0) return null;
         toolbar: { backgroundColor: "transparent" },
         thumbnailsContainer: { backgroundColor: "transparent" },
         thumbnail: { backgroundColor: "transparent" },
-        captionsContainer: { backgroundColor: "transparent" }
       }}
     />
   );
