@@ -132,10 +132,19 @@ function LightboxComponent({ index, slides, close }: { index: number; slides: Sl
         buttonPrev: isSingle ? () => null : undefined,
         buttonNext: isSingle ? () => null : undefined,
         slideFooter: () => null,
+        thumbnail: ({ slide }) => (
+          <div className="w-full h-full flex items-center justify-center bg-neutral-200/50 dark:bg-neutral-800/50">
+             <img src={slide.src} className="object-cover w-full h-full" alt="" />
+          </div>
+        ),
       }}
       zoom={{ maxZoomPixelRatio: 3, doubleTapDelay: 300 }}
       controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
-      styles={{ container: { backgroundColor: "transparent" } }}
+      styles={{
+        container: { backgroundColor: "transparent" },
+        thumbnailsContainer: { backgroundColor: "transparent" },
+        thumbnail: { backgroundColor: "transparent" }
+      }}
     />
   );
 }
@@ -179,10 +188,11 @@ export function Markdown({ content, compact }: { content: string; compact?: bool
 
     const images = Array.from(containerRef.current.querySelectorAll("img.toc-content")) as HTMLImageElement[];
     const newSlides = images.map((img) => {
+      const isFileName = img.alt && /^[a-zA-Z0-9_\-.]+\.[a-zA-Z0-9]+$/.test(img.alt);
       return {
         src: img.src,
         alt: img.alt,
-        title: img.alt || undefined,
+        title: isFileName ? "" : (img.alt || undefined),
         description: undefined,
       };
     });
