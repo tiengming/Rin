@@ -168,6 +168,7 @@ Full documentation is available at https://docs.openrin.org.
 
 We welcome contributions of all kinds—code, documentation, design, and ideas. Please check out our [contributing guidelines](https://docs.openrin.org/en/guide/contribution.html) and join us in building Rin together!
 
+
 ## License
 
 ```
