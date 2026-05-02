@@ -7,7 +7,7 @@ import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus, base16AteliersulphurpoolLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useColorMode } from "../utils/darkModeUtils";
-import { remarkMermaid } from "../remark/remarkMermaid";
+import remarkMermaid from "../remark/remarkMermaid";
 import remarkAlert from "remark-github-blockquote-alert";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
