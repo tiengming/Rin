@@ -206,7 +206,7 @@ function TocRoute({
   path: PathPattern;
   children: (params: DefaultParams, toc: () => JSX.Element, cleanup: (id: string) => void) => ReactNode;
 }) {
-  const { TOC, cleanup } = useTableOfContents(".toc-content");
+  const { TOC, cleanup } = useTableOfContents(".markdown-container");
 
   return (
     <AppRoute path={path} headerComponent={TOCHeader({ TOC })} paddingClassName="mx-4">

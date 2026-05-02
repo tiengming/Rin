@@ -17,7 +17,6 @@ const getHeaderScrollOffset = () => {
 }
 
 const useTableOfContents = (selector: string) => {
-    const intersectingListRef = useRef<boolean[]>([]) // isIntersecting array
     const [tableOfContents, setTableOfContents] = useState<TableOfContent[]>([])
     const [activeIndex, setActiveIndex] = useState(0)
     const { t } = useTranslation()
@@ -29,53 +28,65 @@ const useTableOfContents = (selector: string) => {
         if (lastRef.current === ref) return
         const content = document.querySelector(selector)
         if (!content) return
-        const intersectingList = intersectingListRef.current
+
         const headers = content.querySelectorAll<HTMLElement>(
             'h1, h2, h3, h4, h5, h6'
-        ) // all headers
+        )
 
-        // set TableOfContents
         const tocData = Array.from(headers).map<TableOfContent>((header, i) => ({
             index: i,
             text: header.textContent || '',
             marginLeft: (Number(header.tagName.charAt(1)) - 1) * 10,
-            element: header, // have to down little bit
+            element: header,
         }))
         setTableOfContents(tocData)
 
-        // create IntersectionObserver
         if (io.current) io.current.disconnect()
+
         io.current = new IntersectionObserver(
             (entries) => {
-                // save isIntersecting info to array using data-id
-                entries.forEach(({ target, isIntersecting }) => {
-                    const idx = Number((target as HTMLElement).dataset.id || 0)
-                    intersectingList[idx] = isIntersecting
-                })
-                // get activeIndex
-                const currentIndex = intersectingList.findIndex((item) => item)
-                let activeIndex = currentIndex - 1
-                if (currentIndex === -1) {
-                    activeIndex = intersectingList.length - 1
-                } else if (currentIndex === 0) {
-                    activeIndex = 0
+                const visibleHeaders = entries
+                    .filter(entry => entry.isIntersecting)
+                    .map(entry => entry.target as HTMLElement);
+
+                if (visibleHeaders.length > 0) {
+                    const firstVisible = visibleHeaders[0];
+                    const idx = Number(firstVisible.dataset.id);
+                    if (!isNaN(idx)) {
+                        setActiveIndex(idx);
+                    }
+                } else {
+                    // If no headers are visible, find the one closest to the top of viewport
+                    const allEntries = entries.map(entry => ({
+                        target: entry.target as HTMLElement,
+                        top: entry.boundingClientRect.top
+                    }));
+
+                    const aboveViewport = allEntries.filter(e => e.top < 0);
+                    if (aboveViewport.length > 0) {
+                        const closest = aboveViewport.reduce((prev, curr) =>
+                            Math.abs(curr.top) < Math.abs(prev.top) ? curr : prev
+                        );
+                        const idx = Number(closest.target.dataset.id);
+                        if (!isNaN(idx)) {
+                            setActiveIndex(idx);
+                        }
+                    }
                 }
-                setActiveIndex(activeIndex)
             },
-            { rootMargin: "-20% 0px 10000px 0px", threshold: 0 }
+            { rootMargin: "-10% 0px -80% 0px", threshold: 0 }
         )
-        intersectingList.length = 0 // reset array
+
         headers.forEach((header, i) => {
-            if (header.getAttribute('data-id') !== null) return
-            header.setAttribute('data-id', i.toString()) // set data-id
-            intersectingList.push(false) // increase array length
-            io.current!.observe(header) // register to observe
+            header.setAttribute('data-id', i.toString())
+            io.current!.observe(header)
         })
+
         lastRef.current = ref
         return () => {
             if (io.current) io.current.disconnect()
         }
-    }, [ref])
+    }, [ref, selector])
 
     const cleanup = (newId: string) => {
         if (lastRef.current === newId) return
@@ -85,13 +96,13 @@ const useTableOfContents = (selector: string) => {
 
     return {
         TOC: () => (<div className='rounded-2xl bg-w py-4 px-4 t-primary'>
-            <h2 className="text-lg font-bold">{t("index.title")}</h2>
-            <ul className="max-h-[calc(100vh-10.25rem)] overflow-auto" style={{ scrollbarWidth: "none" }}>
+            <h2 className="text-lg font-bold mb-4">{t("index.title")}</h2>
+            <ul className="max-h-[calc(100vh-10.25rem)] overflow-auto space-y-2" style={{ scrollbarWidth: "none" }}>
                 {tableOfContents.length === 0 && <li>{t("index.empty.title")}</li>}
                 {tableOfContents.map((item) => (
                     <li
                         key={`toc$${item.index}`}
-                        className={`cursor-pointer hover:opacity-50 ${activeIndex === item.index ? "text-theme" : ""}`}
+                        className={`cursor-pointer transition-all duration-200 hover:opacity-70 ${activeIndex === item.index ? "text-blue-500 font-semibold scale-105 origin-left" : "text-neutral-500"}`}
                         style={{ marginLeft: item.marginLeft }}
                         onClick={() => {
                             const top = item.element.getBoundingClientRect().top + window.scrollY - getHeaderScrollOffset()
