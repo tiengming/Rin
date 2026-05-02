@@ -1,90 +1,79 @@
-import "katex/dist/katex.min.css";
-import React, { useEffect, useMemo, useRef, useCallback, Suspense, useState, lazy } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense, lazy } from "react";
 import ReactMarkdown from "react-markdown";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import {
-  base16AteliersulphurpoolLight,
-  vscDarkPlus,
-} from "react-syntax-highlighter/dist/esm/styles/prism";
+import gfm from "remark-gfm";
+import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
-import gfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus, base16AteliersulphurpoolLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useColorMode } from "../utils/darkModeUtils";
 import remarkMermaid from "../remark/remarkMermaid";
-import { remarkAlert } from "remark-github-blockquote-alert";
-import remarkMath from "remark-math";
-import type { SlideImage, Plugin } from "yet-another-react-lightbox";
+import remarkAlert from "remark-github-blockquote-alert";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 import "yet-another-react-lightbox/plugins/counter.css";
-import { drawBlurhashToCanvas } from "../utils/blurhash";
-import { useColorMode } from "../utils/darkModeUtils";
-import { parseImageUrlMetadata } from "../utils/image-upload";
-import { useImageLoadState } from "../utils/use-image-load-state";
 
 const Lightbox = lazy(() => import("yet-another-react-lightbox"));
 
-function countNewlinesBeforeNode(content: string, offset: number) {
+interface SlideImage {
+  src: string;
+  title?: string;
+  description?: string;
+}
+
+type Plugin = any;
+
+function countNewlinesBeforeNode(content: string, offset: number): number {
   let count = 0;
   for (let i = offset - 1; i >= 0; i--) {
     if (content[i] === "\n") {
       count++;
-    } else if (content[i] !== " " && content[i] !== "\t") {
+    } else if (content[i] !== " " && content[i] !== "\t" && content[i] !== "\r") {
       break;
     }
   }
   return count;
 }
 
-function isMarkdownImageLinkAtEnd(content: string) {
-  return /!\[.*\]\(.*\)$/.test(content.trim());
+function isMarkdownImageLinkAtEnd(content: string): boolean {
+  const trimmed = content.trimEnd();
+  return trimmed.endsWith(")");
 }
 
-function MarkdownImage({ src, alt, show, rounded, scale, compact }: { src?: string; alt?: string; show: (src: string) => void; rounded: boolean; scale: string; compact?: boolean }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const metadata = useMemo(() => parseImageUrlMetadata(src || ""), [src]);
-  const { loaded: isLoaded, onLoad: handleLoad, onError, imageRef } = useImageLoadState(src);
-
-  useEffect(() => {
-    if (metadata.blurhash && canvasRef.current) {
-      drawBlurhashToCanvas(canvasRef.current, metadata.blurhash);
-    }
-  }, [metadata.blurhash]);
-
-  const aspectRatio = metadata.width && metadata.height
-    ? metadata.width / metadata.height
-    : 16 / 9;
-
-  const isTall = aspectRatio < 1;
-  const shouldCrop = compact && isTall;
+function MarkdownImage({
+  src,
+  alt,
+  show,
+  rounded,
+  scale,
+  compact,
+}: {
+  src?: string;
+  alt?: string;
+  show: (src: string) => void;
+  rounded: boolean;
+  scale: string;
+  compact?: boolean;
+}) {
+  const shouldCrop = compact && !rounded;
 
   return (
     <div
-      className="relative inline-block overflow-hidden transition-all duration-500 ease-in-out bg-neutral-100 dark:bg-neutral-800/50"
+      className="relative inline-block overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] cursor-zoom-in"
       style={{
         width: `calc(${scale} * 100%)`,
-        maxWidth: metadata.width ? `${metadata.width}px` : "100%",
-        aspectRatio: shouldCrop ? "3/4" : (isLoaded ? "auto" : aspectRatio),
-        borderRadius: rounded ? "16px" : "4px",
+        borderRadius: rounded ? "1.5rem" : "0",
+        boxShadow: rounded ? "0 20px 40px -10px rgba(0,0,0,0.1)" : "none",
+        aspectRatio: shouldCrop ? "16 / 9" : "auto",
       }}
+      onClick={() => src && show(src)}
     >
-      {!isLoaded && metadata.blurhash && (
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full scale-110 blur-2xl"
-          width={32}
-          height={32}
-        />
-      )}
       <img
         src={src}
         alt={alt}
-        ref={imageRef} loading="lazy" onError={onError}
-        onLoad={handleLoad}
-        onClick={() => src && show(src)}
-        className={`toc-content cursor-zoom-in w-full h-auto transition-all duration-500 hover:brightness-90 active:scale-[0.98] ${
-          isLoaded ? "opacity-100" : "opacity-0 scale-105"
-        } ${shouldCrop ? "h-full object-cover object-top" : ""}`}
+        loading="lazy"
+        className={`toc-content max-w-full h-auto mx-auto ${shouldCrop ? "h-full object-cover object-top" : ""}`}
       />
       {shouldCrop && (
         <span className="absolute bottom-2 right-2 bg-black/40 text-white text-[10px] px-1.5 py-0.5 rounded-lg backdrop-blur-md pointer-events-none">
@@ -94,7 +83,6 @@ function MarkdownImage({ src, alt, show, rounded, scale, compact }: { src?: stri
     </div>
   );
 }
-
 
 function LightboxComponent({ index, slides, close }: { index: number; slides: SlideImage[]; close: () => void }) {
   const [plugins, setPlugins] = useState<Plugin[]>([]);
@@ -117,7 +105,7 @@ function LightboxComponent({ index, slides, close }: { index: number; slides: Sl
     });
   }, [isSingle]);
 
-if (plugins.length === 0) return null;
+  if (plugins.length === 0) return null;
 
   return (
     <Lightbox
@@ -126,27 +114,22 @@ if (plugins.length === 0) return null;
       slides={slides}
       open={true}
       close={close}
-      // 1. 调整字幕显示：增加一点内边距感
-      captions={{ 
-        descriptionTextAlign: "center", 
+      captions={{
+        descriptionTextAlign: "center",
         descriptionMaxLines: 3,
       }}
-      // 2. 缩略图间距增加到 20，让 Apple 风格的 Scale 动画有空间，不拥挤
-      thumbnails={{ 
-        position: "bottom", 
+      thumbnails={{
+        position: "bottom",
         width: 110,
         height: 74,
-        border: 0, 
+        border: 0,
         gap: 24
       }}
-      // 3. 动画曲线调优
       animation={{ fade: 400, swipe: 600, navigation: 400 }}
       render={{
         buttonPrev: isSingle ? () => null : undefined,
         buttonNext: isSingle ? () => null : undefined,
-        // 4. 彻底杀掉默认的页脚背景
         slideFooter: () => null,
-        // 5. 缩略图渲染逻辑保持现状（CSS 会接管背景和圆角）
         thumbnail: ({ slide }) => (
           <div className="w-full h-full flex items-center justify-center bg-neutral-200/50 dark:bg-neutral-800/50">
              <img src={slide.src} className="object-cover w-full h-full" alt="" />
@@ -154,9 +137,7 @@ if (plugins.length === 0) return null;
         ),
       }}
       zoom={{ maxZoomPixelRatio: 3, doubleTapDelay: 300 }}
-      // 6. 交互灵魂：允许下拉/背景点击关闭
       controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
-      // 7. 样式打通：必须设为 transparent 以启用 CSS 的 backdrop-filter
       styles={{
         root: { backgroundColor: "transparent" },
         container: { backgroundColor: "transparent" },
@@ -201,32 +182,30 @@ export function Markdown({ content, compact }: { content: string; compact?: bool
   const slides = useRef<SlideImage[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const colorMode = useColorMode();
-  
+
   const show = useCallback((src: string) => {
     if (!containerRef.current) return;
-  
+
     const images = Array.from(containerRef.current.querySelectorAll("img.toc-content")) as HTMLImageElement[];
     const newSlides = images.map((img) => {
-      // 扩展正则：识别常见的文件名格式或 URL 片段
       const isGenericName = img.alt && (
-        /^[a-zA-Z0-9_\-.]+\.[a-zA-Z0-9]+$/.test(img.alt) || 
-        img.alt === "image.png" || 
+        /^[a-zA-Z0-9_\-.]+\.[a-zA-Z0-9]+$/.test(img.alt) ||
+        img.alt === "image.png" ||
         img.alt === "image"
       );
-  
+
       return {
         src: img.src,
-        // 如果是文件名，设为 undefined 从而不渲染标题，保持极致留白
         title: isGenericName ? undefined : (img.alt || undefined),
         description: undefined,
       };
     });
-  
+
     slides.current = newSlides;
     const foundIndex = images.findIndex((img) => img.src === src);
     setIndex(foundIndex);
   }, []);
-  
+
   useEffect(() => {
     slides.current = [];
   }, [content]);
@@ -268,7 +247,7 @@ export function Markdown({ content, compact }: { content: string; compact?: bool
             );
           }
         },
-        iframe(props) {
+        iframe({ node, ...props }) {
             return (
                 <div className="w-full aspect-video rounded-2xl overflow-hidden my-6 border border-black/5 dark:border-white/5 shadow-sm">
                     <iframe {...props} className="w-full h-full" />
@@ -309,30 +288,26 @@ export function Markdown({ content, compact }: { content: string; compact?: bool
             </code>
           );
         },
-        blockquote({ children, ...props }) {
+        blockquote({ node, children, ...props }) {
           return (
             <blockquote {...props}>
               {children}
             </blockquote>
           );
         },
-        h1: (props) => <h1 id={props.children?.toString()} style={headingStyle} {...props} />,
-        h2: (props) => <h2 id={props.children?.toString()} style={headingStyle} {...props} />,
-        h3: (props) => <h3 id={props.children?.toString()} style={headingStyle} {...props} />,
-        h4: (props) => <h4 id={props.children?.toString()} style={headingStyle} {...props} />,
-        p: (props) => <p {...props} />,
-        ul: (props) => <ul {...props} className="list-disc pl-6 my-6 space-y-3 marker:text-theme/40" />,
-        ol: (props) => <ol {...props} className="list-decimal pl-6 my-6 space-y-3 marker:text-theme/40 font-medium" />,
-        li: (props) => <li {...props} className="pl-2" />,
-        a: (props) => <a {...props} className="text-theme hover:underline underline-offset-4 decoration-2 font-medium" />,
-        hr: () => <hr className="my-12 border-black/5 dark:border-white/5" />,
-        table: (props) => (
-          <div className="overflow-x-auto my-10 rounded-2xl border border-black/5 dark:border-white/10 shadow-sm">
-            <table className="min-w-full divide-y divide-black/5 dark:divide-white/10" {...props} />
-          </div>
-        ),
-        th: (props) => <th {...props} className="px-6 py-4 bg-neutral-50 dark:bg-neutral-900/50 text-left text-xs font-bold text-neutral-500 uppercase tracking-wider" />,
-        td: (props) => <td {...props} className="px-6 py-4 whitespace-nowrap text-sm border-t border-black/5 dark:border-white/5" />,
+        h1: ({ node, ...props }) => <h1 id={props.children?.toString()} style={headingStyle} {...props} />,
+        h2: ({ node, ...props }) => <h2 id={props.children?.toString()} style={headingStyle} {...props} />,
+        h3: ({ node, ...props }) => <h3 id={props.children?.toString()} style={headingStyle} {...props} />,
+        h4: ({ node, ...props }) => <h4 id={props.children?.toString()} style={headingStyle} {...props} />,
+        p: ({ node, ...props }) => <p {...props} />,
+        ul: ({ node, ...props }) => <ul {...props} />,
+        ol: ({ node, ...props }) => <ol {...props} />,
+        li: ({ node, ...props }) => <li {...props} />,
+        a: ({ node, ...props }) => <a {...props} />,
+        hr: ({ node, ...props }) => <hr {...props} />,
+        table: ({ node, ...props }) => <table {...props} />,
+        th: ({ node, ...props }) => <th {...props} />,
+        td: ({ node, ...props }) => <td {...props} />,
       }}
     >
       {content}
@@ -340,7 +315,7 @@ export function Markdown({ content, compact }: { content: string; compact?: bool
   ), [content, show, colorMode, headingStyle, compact]);
 
   return (
-    <div ref={containerRef} className="markdown-container">
+    <div ref={containerRef} className="markdown-container prose prose-zinc dark:prose-invert max-w-none prose-apple">
       {Content}
       {index >= 0 && (
         <Suspense fallback={null}>
